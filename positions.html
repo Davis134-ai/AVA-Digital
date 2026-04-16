@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js');
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVA-Digital - Referral Positions</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ----- LIGHT THEME · AVA‑DIGITAL COLOR SYSTEM ----- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: rgb(255, 255, 255);
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            color: #1A1A2E;
+            line-height: 1.5;
+            padding-bottom: 80px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 24px;
+        }
+
+        /* Header with gradient */
+        .positions-header {
+            background: linear-gradient(135deg, #FF2D2D, #FF7A00, #CC1177, #7B22CC, #1133DD);
+            color: white;
+            padding: 40px 30px;
+            border-radius: 32px;
+            margin-bottom: 32px;
+            text-align: center;
+            box-shadow: 0 20px 35px -8px rgba(123, 34, 204, 0.25);
+        }
+
+        .positions-header h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+        }
+
+        .positions-header p {
+            opacity: 0.95;
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+
+        .positions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        .position-card {
+            background: #FFFFFF;
+            border-radius: 28px;
+            padding: 28px 24px;
+            box-shadow: 0 15px 30px -10px rgba(0,0,0,0.05), 0 0 0 1px rgba(123, 34, 204, 0.06);
+            transition: transform 0.2s ease, box-shadow 0.2s;
+            border-top: 6px solid #7B22CC;
+        }
+
+        .position-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 40px -12px rgba(123, 34, 204, 0.15);
+        }
+
+        .position-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #7B22CC;
+            margin-bottom: 12px;
+        }
+
+        .position-requirement {
+            background: #F9F7FF;
+            padding: 14px 16px;
+            border-radius: 18px;
+            margin: 18px 0;
+            font-size: 0.95rem;
+            color: #1E1E3A;
+            border: 1px solid rgba(123,34,204,0.1);
+        }
+
+        .position-requirement i {
+            color: #CC1177;
+            margin-right: 6px;
+        }
+
+        .position-salary {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #00BBAA;
+            margin: 16px 0 8px;
+        }
+
+        .benefits-tag {
+            display: inline-block;
+            background: rgba(26, 136, 255, 0.1);
+            color: #1A88FF;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin: 8px 0;
+        }
+
+        .card {
+            background: #FFFFFF;
+            border-radius: 28px;
+            padding: 28px 30px;
+            margin: 30px 0;
+            box-shadow: 0 15px 30px -10px rgba(0,0,0,0.05), 0 0 0 1px rgba(123, 34, 204, 0.06);
+        }
+
+        .card h3 {
+            color: #1E1E3A;
+            font-weight: 700;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .card h3 i {
+            color: #7B22CC;
+            margin-right: 8px;
+        }
+
+        .disclaimer {
+            background: #FFF8E7;
+            border-left: 6px solid #FF7A00;
+            padding: 24px 28px;
+            border-radius: 24px;
+            margin: 40px 0;
+            color: #1E1E3A;
+            font-weight: 500;
+        }
+
+        .disclaimer i {
+            color: #FF7A00;
+            margin-right: 10px;
+        }
+
+        .benefits-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .benefits-list span {
+            background: linear-gradient(135deg, #FF7A00, #CC1177);
+            color: white;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 10px rgba(204,17,119,0.2);
+        }
+
+        .benefits-list i {
+            font-size: 1rem;
+        }
+
+        /* Bottom navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(12px);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 8px 16px 14px;
+            border-top: 1px solid rgba(123,34,204,0.08);
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.02);
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #6A6A8A;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 40px;
+            transition: all 0.2s;
+        }
+
+        .nav-item i { font-size: 1.5rem; margin-bottom: 4px; }
+        .nav-item.active { color: #CC1177; background: rgba(204,17,119,0.04); }
+        .nav-item:hover { color: #7B22CC; }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .container { padding: 16px; }
+            .positions-header { padding: 30px 20px; }
+            .positions-header h1 { font-size: 1.8rem; }
+            .position-title { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="positions-header">
+            <h1><i class="fas fa-briefcase"></i> Referral Positions</h1>
+            <p>Climb the ladder by referring successful users</p>
+        </div>
+
+        <div class="positions-grid">
+            <!-- Local Manager -->
+            <div class="position-card">
+                <div class="position-title">Local Manager</div>
+                <div class="position-requirement">
+                    <i class="fas fa-users"></i> <strong>Requirement:</strong> 10 referrals
+                </div>
+                <div class="position-salary">UGX 80,000 / month</div>
+                <div><i class="fas fa-check-circle" style="color:#00BBAA;"></i> Monthly salary</div>
+            </div>
+
+            <!-- Local Supervisor -->
+            <div class="position-card">
+                <div class="position-title">Local Supervisor</div>
+                <div class="position-requirement">
+                    <i class="fas fa-users"></i> <strong>Requirement:</strong> 25 referrals
+                </div>
+                <div class="position-salary">UGX 200,000 / month + benefits</div>
+                <div class="benefits-tag">Benefits included</div>
+            </div>
+
+            <!-- City Manager -->
+            <div class="position-card">
+                <div class="position-title">City Manager</div>
+                <div class="position-requirement">
+                    <i class="fas fa-users"></i> <strong>Requirement:</strong> 50 referrals, with at least 10 of A3 and above
+                </div>
+                <div class="position-salary">UGX 650,000 / month + benefits</div>
+                <div class="benefits-tag">Benefits included</div>
+            </div>
+
+            <!-- City Supervisor -->
+            <div class="position-card">
+                <div class="position-title">City Supervisor</div>
+                <div class="position-requirement">
+                    <i class="fas fa-users"></i> <strong>Requirement:</strong> 120 referrals, with at least 40 of A3 and above
+                </div>
+                <div class="position-salary">UGX 1,500,000 / month + benefits</div>
+                <div class="benefits-tag">Benefits included</div>
+            </div>
+
+            <!-- Regional Manager -->
+            <div class="position-card">
+                <div class="position-title">Regional Manager</div>
+                <div class="position-requirement">
+                    <i class="fas fa-users"></i> <strong>Requirement:</strong> 180 referrals, with at least 65 of A3 and above
+                </div>
+                <div class="position-salary">UGX 3,500,000 / month + benefits</div>
+                <div class="benefits-tag">Benefits included</div>
+            </div>
+
+            <!-- Regional Supervisor -->
+            <div class="position-card">
+                <div class="position-title">Regional Supervisor</div>
+                <div class="position-requirement">
+                    <i class="fas fa-users"></i> <strong>Requirement:</strong> 250 referrals, with at least 80 of A3 and above
+                </div>
+                <div class="position-salary">UGX 5,500,000 / month + benefits</div>
+                <div class="benefits-tag">Benefits included</div>
+            </div>
+        </div>
+
+        <!-- Benefits overview -->
+        <div class="card">
+            <h3><i class="fas fa-gift"></i> Benefits for Supervisors and Above</h3>
+            <div class="benefits-list">
+                <span><i class="fas fa-building"></i> Dedicated office</span>
+                <span><i class="fas fa-car"></i> A car</span>
+                <span><i class="fas fa-laptop"></i> Work laptop</span>
+                <span><i class="fas fa-heartbeat"></i> Health insurance</span>
+                <span><i class="fas fa-plane"></i> International travels</span>
+            </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="disclaimer">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Disclaimer:</strong> Referrals must be successful to claim positions. A successful referral is a user who has upgraded to any paid tier (A1–A4) and remains active. All benefits are subject to company policies and may be adjusted.
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="home.html" class="nav-item">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="invest.html" class="nav-item">
+            <i class="fas fa-chart-line"></i>
+            <span>Invest</span>
+        </a>
+        <a href="task.html" class="nav-item">
+            <i class="fas fa-tasks"></i>
+            <span>Task</span>
+        </a>
+        <a href="level.html" class="nav-item">
+            <i class="fas fa-trophy"></i>
+            <span>Level</span>
+        </a>
+        <a href="profile.html" class="nav-item">
+            <i class="fas fa-user"></i>
+            <span>Profile</span>
+        </a>
+    </nav>
+</body>
+</html>

@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js');
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVA-Digital - My Referrals</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ----- LIGHT THEME · AVA‑DIGITAL COLOR SYSTEM ----- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: rgb(255, 255, 255);
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            color: #1A1A2E;
+            line-height: 1.5;
+            padding-bottom: 80px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px 24px;
+        }
+
+        /* Header with gradient */
+        .referrals-header {
+            background: linear-gradient(135deg, #FF2D2D, #FF7A00, #CC1177, #7B22CC, #1133DD);
+            color: white;
+            padding: 32px 24px;
+            border-radius: 32px;
+            margin-bottom: 28px;
+            text-align: center;
+            box-shadow: 0 20px 35px -8px rgba(123, 34, 204, 0.25);
+        }
+
+        .referrals-header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+
+        .referrals-header p {
+            opacity: 0.95;
+            font-weight: 500;
+        }
+
+        /* Stats grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: #FFFFFF;
+            border-radius: 20px;
+            padding: 20px 16px;
+            text-align: center;
+            box-shadow: 0 12px 25px -8px rgba(0,0,0,0.05), 0 0 0 1px #F0EEF8;
+            border-top: 4px solid #7B22CC;
+        }
+
+        .stat-card .stat-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #7B22CC;
+            margin-bottom: 6px;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.8rem;
+            color: #5A5A7A;
+            font-weight: 500;
+        }
+
+        /* Referral code card */
+        .referral-code-card {
+            background: linear-gradient(135deg, #1A1A3A, #2A1A44);
+            border-radius: 24px;
+            padding: 28px 24px;
+            margin-bottom: 28px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 15px 25px -10px rgba(123,34,204,0.2);
+        }
+
+        .referral-code-card h3 {
+            font-size: 1rem;
+            opacity: 0.85;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .referral-code-display {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #FF7A00;
+            background: rgba(255,255,255,0.08);
+            padding: 16px 20px;
+            border-radius: 18px;
+            margin: 16px 0;
+            letter-spacing: 3px;
+            border: 1px solid rgba(255,122,0,0.3);
+        }
+
+        .copy-btn {
+            background: linear-gradient(135deg, #7B22CC, #CC1177);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 40px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 1rem;
+            box-shadow: 0 10px 18px -6px rgba(123,34,204,0.4);
+            transition: transform 0.1s;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .copy-btn:active {
+            transform: scale(0.97);
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1E1E3A;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: #7B22CC;
+        }
+
+        /* Referral cards */
+        .referral-card {
+            background: #FFFFFF;
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 10px 20px -6px rgba(0,0,0,0.04), 0 0 0 1px #F0EEF8;
+            border-left: 5px solid #7B22CC;
+        }
+
+        .referral-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .referral-phone {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #1E1E3A;
+        }
+
+        .tier-badge {
+            padding: 5px 14px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .tier-free { background: #9E9E9E; }
+        .tier-internship { background: #FF7A00; }
+        .tier-A1 { background: #7B22CC; }
+        .tier-A2 { background: #00BBAA; }
+        .tier-A3 { background: #1A88FF; }
+        .tier-A4 { background: #CC1177; }
+
+        .referral-card-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .referral-stat {
+            text-align: center;
+            background: #F9F7FF;
+            border-radius: 14px;
+            padding: 10px 5px;
+        }
+
+        .referral-stat .rs-value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #7B22CC;
+        }
+
+        .referral-stat .rs-label {
+            font-size: 0.7rem;
+            color: #5A5A7A;
+            margin-top: 4px;
+        }
+
+        .upgrade-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid #F0EEF8;
+        }
+
+        .upgrade-indicator.upgraded {
+            color: #00BBAA;
+        }
+
+        .upgrade-indicator.not-upgraded {
+            color: #9E9E9E;
+        }
+
+        .joined-date {
+            font-size: 0.75rem;
+            color: #5A5A7A;
+            margin-top: 4px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 24px;
+            color: #5A5A7A;
+            background: #FAFAFF;
+            border-radius: 28px;
+        }
+
+        .empty-state i {
+            font-size: 3.5rem;
+            color: #D0D0E0;
+            margin-bottom: 16px;
+        }
+
+        .empty-state p {
+            margin-bottom: 16px;
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 40px;
+            color: #5A5A7A;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #7B22CC, #CC1177);
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 14px 28px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 1rem;
+            box-shadow: 0 12px 18px -8px rgba(123,34,204,0.3);
+            transition: transform 0.15s;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- Header -->
+        <div class="referrals-header">
+            <h1><i class="fas fa-user-friends"></i> My Referrals</h1>
+            <p>Track your referrals and commissions</p>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="total-referred">0</div>
+                <div class="stat-label">Total Referred</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="total-upgraded">0</div>
+                <div class="stat-label">Upgraded to Paid</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="total-commission">UGX 0</div>
+                <div class="stat-label">Total Commission</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="pending-commission">UGX 0</div>
+                <div class="stat-label">Pending Upgrades</div>
+            </div>
+        </div>
+
+        <!-- Referral Code Card -->
+        <div class="referral-code-card">
+            <h3>Your Referral Code</h3>
+            <div class="referral-code-display" id="referral-code">Loading...</div>
+            <div style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 16px;">
+                Share your link and earn commissions
+            </div>
+            <button class="copy-btn" id="copy-link-btn">
+                <i class="fas fa-copy"></i> Copy Referral Link
+            </button>
+        </div>
+
+        <!-- Referrals List -->
+        <div class="section-title">
+            <i class="fas fa-list"></i>
+            People You've Referred
+        </div>
+
+        <div id="referrals-container">
+            <div class="loading-state">
+                <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #7B22CC;"></i>
+                <p style="margin-top: 15px;">Loading your referrals...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { supabase } from './supabase.js';
+        import { getCurrentUser } from './auth.js';
+
+        async function loadReferrals() {
+            const { data: { user } } = await getCurrentUser();
+            if (!user) { window.location.href = 'index.html'; return; }
+
+            // Get current user's profile for referral code
+            const { data: myProfile } = await supabase
+                .from('profiles')
+                .select('referral_code, phone')
+                .eq('id', user.id)
+                .single();
+
+            if (!myProfile) return;
+
+            // Show referral code
+            document.getElementById('referral-code').textContent = myProfile.referral_code;
+
+            // Copy link button
+            document.getElementById('copy-link-btn').addEventListener('click', () => {
+                const link = window.location.origin + '/register.html?ref=' + myProfile.referral_code;
+                navigator.clipboard.writeText(link);
+                const btn = document.getElementById('copy-link-btn');
+                btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> Copy Referral Link';
+                }, 2000);
+            });
+
+            // Get all referrals for this user
+            const { data: referrals } = await supabase
+                .from('referrals')
+                .select('referred_user_id, commission_earned, first_upgrade_commission_paid, created_at')
+                .eq('referrer_id', user.id);
+
+            if (!referrals || referrals.length === 0) {
+                document.getElementById('referrals-container').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-user-plus"></i>
+                        <p>You haven't referred anyone yet.</p>
+                        <p style="font-size: 0.9rem;">Share your referral link and start earning commissions!</p>
+                        <button class="btn" onclick="document.getElementById('copy-link-btn').click()">
+                            <i class="fas fa-share-alt"></i> Share Your Link
+                        </button>
+                    </div>
+                `;
+                document.getElementById('total-referred').textContent = '0';
+                document.getElementById('total-upgraded').textContent = '0';
+                document.getElementById('total-commission').textContent = 'UGX 0';
+                document.getElementById('pending-commission').textContent = 'UGX 0';
+                return;
+            }
+
+            // Get profiles of all referred users
+            const referredIds = referrals.map(r => r.referred_user_id);
+            const { data: referredProfiles } = await supabase
+                .from('profiles')
+                .select('id, phone, tier, total_earned, created_at')
+                .in('id', referredIds);
+
+            // Build a map for quick lookup
+            const profileMap = {};
+            if (referredProfiles) {
+                referredProfiles.forEach(p => profileMap[p.id] = p);
+            }
+
+            // Calculate summary stats
+            const totalReferred = referrals.length;
+            const totalUpgraded = referrals.filter(r => r.first_upgrade_commission_paid).length;
+            const totalCommission = referrals.reduce((sum, r) => sum + (r.commission_earned || 0), 0);
+            const pendingUpgrades = referrals.filter(r => {
+                const profile = profileMap[r.referred_user_id];
+                return profile && profile.tier === 'free' && !r.first_upgrade_commission_paid;
+            }).length;
+
+            // Update stats
+            document.getElementById('total-referred').textContent = totalReferred;
+            document.getElementById('total-upgraded').textContent = totalUpgraded;
+            document.getElementById('total-commission').textContent = 'UGX ' + totalCommission.toLocaleString();
+            document.getElementById('pending-commission').textContent = pendingUpgrades + ' users';
+
+            // Render referral cards
+            const container = document.getElementById('referrals-container');
+            container.innerHTML = '';
+
+            referrals.forEach(referral => {
+                const profile = profileMap[referral.referred_user_id];
+                if (!profile) return;
+
+                const joinedDate = new Date(profile.created_at).toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                });
+
+                const tierClass = profile.tier === 'free' ? 'tier-free' :
+                                  profile.tier === 'internship' ? 'tier-internship' :
+                                  'tier-' + profile.tier;
+
+                const tierLabel = profile.tier === 'free' ? 'Free' :
+                                  profile.tier === 'internship' ? 'Internship' :
+                                  profile.tier;
+
+                const hasUpgraded = referral.first_upgrade_commission_paid;
+
+                const card = document.createElement('div');
+                card.className = 'referral-card';
+                card.innerHTML = `
+                    <div class="referral-card-top">
+                        <div>
+                            <div class="referral-phone">${profile.phone}</div>
+                            <div class="joined-date">Joined ${joinedDate}</div>
+                        </div>
+                        <span class="tier-badge ${tierClass}">${tierLabel}</span>
+                    </div>
+                    <div class="referral-card-stats">
+                        <div class="referral-stat">
+                            <div class="rs-value">UGX ${(referral.commission_earned || 0).toLocaleString()}</div>
+                            <div class="rs-label">Your Commission</div>
+                        </div>
+                        <div class="referral-stat">
+                            <div class="rs-value">UGX ${(profile.total_earned || 0).toLocaleString()}</div>
+                            <div class="rs-label">Their Earnings</div>
+                        </div>
+                        <div class="referral-stat">
+                            <div class="rs-value">${profile.tier === 'free' ? 'Free' : profile.tier}</div>
+                            <div class="rs-label">Current Tier</div>
+                        </div>
+                    </div>
+                    <div class="upgrade-indicator ${hasUpgraded ? 'upgraded' : 'not-upgraded'}">
+                        <i class="fas ${hasUpgraded ? 'fa-check-circle' : 'fa-clock'}"></i>
+                        ${hasUpgraded
+                            ? 'Upgraded — 10% bonus commission paid'
+                            : 'Not yet upgraded to paid tier'}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        loadReferrals();
+    </script>
+</body>
+</html>

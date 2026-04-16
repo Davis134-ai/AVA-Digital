@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js');
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>AVA-Digital - Tasks</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ----- LIGHT THEME · AVA‑DIGITAL COLOR SYSTEM ----- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: rgb(255, 255, 255);
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            color: #1A1A2E;
+            line-height: 1.5;
+            padding-bottom: 80px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px 24px;
+        }
+
+        /* Header with gradient */
+        .task-header {
+            background: linear-gradient(135deg, #FF2D2D, #FF7A00, #CC1177, #7B22CC, #1133DD);
+            color: white;
+            padding: 32px 24px;
+            border-radius: 32px;
+            margin-bottom: 28px;
+            text-align: center;
+            box-shadow: 0 20px 35px -8px rgba(123, 34, 204, 0.25);
+        }
+
+        .task-header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+
+        .task-header p {
+            opacity: 0.95;
+            font-weight: 500;
+        }
+
+        .task-stats {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(4px);
+            padding: 18px 12px;
+            border-radius: 24px;
+            margin: 24px 0 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: white;
+        }
+
+        /* Cards */
+        .card {
+            background: #FFFFFF;
+            border-radius: 28px;
+            padding: 28px 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 15px 30px -10px rgba(0,0,0,0.05), 0 0 0 1px rgba(123, 34, 204, 0.06);
+        }
+
+        .video-list { margin-top: 30px; }
+
+        .video-item {
+            background: #FFFFFF;
+            border-radius: 24px;
+            padding: 24px 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 12px 25px -8px rgba(0,0,0,0.05), 0 0 0 1px #F0EEF8;
+            border-left: 5px solid #7B22CC;
+        }
+
+        .video-wrapper {
+            width: 100%;
+            border-radius: 20px;
+            overflow: hidden;
+            background: #000;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .video-wrapper video {
+            width: 100%;
+            max-height: 240px;
+            display: block;
+        }
+
+        .watch-progress {
+            background: #E2E2F0;
+            height: 8px;
+            border-radius: 8px;
+            margin: 16px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #7B22CC, #CC1177);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .claim-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+
+        .timer-display {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #7B22CC;
+        }
+
+        .completed-badge {
+            background: #00BBAA;
+            color: white;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #7B22CC, #CC1177);
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 14px 28px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 1rem;
+            box-shadow: 0 12px 18px -8px rgba(123,34,204,0.3);
+            transition: transform 0.15s, box-shadow 0.2s;
+            border: 1px solid rgba(255,255,255,0.2);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-disabled {
+            background: #C0C0D0 !important;
+            box-shadow: none !important;
+            cursor: not-allowed !important;
+            opacity: 0.6;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #00BBAA, #1A88FF) !important;
+        }
+
+        .free-overlay {
+            background: #FFF8E7;
+            border: 1px solid #FF7A00;
+            border-radius: 24px;
+            padding: 18px 22px;
+            text-align: center;
+            margin-bottom: 24px;
+            color: #1E1E3A;
+        }
+
+        .limit-reached-banner {
+            background: #FFEBEE;
+            border: 1px solid #FF2D2D;
+            border-radius: 24px;
+            padding: 18px 22px;
+            text-align: center;
+            margin-bottom: 24px;
+            display: none;
+            color: #1E1E3A;
+        }
+
+        .internship-banner {
+            background: linear-gradient(135deg, #1A1A3A, #2A1A44);
+            border: 1px solid #FF7A00;
+            border-radius: 24px;
+            padding: 20px 24px;
+            text-align: center;
+            margin-bottom: 24px;
+            color: white;
+            display: none;
+        }
+
+        .internship-banner .days-left {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #FF7A00;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 0;
+            box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .nav-item {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    text-decoration: none;
+                    color: #6A6A8A;
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                    transition: all 0.2s;
+                    padding: 6px 14px;
+                    border-radius: 40px;
+        }
+
+        .nav-item i {
+            font-size: 1.3rem;
+            margin-bottom: 4px;
+        }
+
+        .nav-item.active {
+            color: #CC1177;
+                    background: rgba(204,17,119,0.04);
+        }
+
+        h2, h3 { color: #1E1E3A; }
+
+        a { color: #1A88FF; }
+
+        @media (max-width: 550px) {
+            .claim-section { flex-direction: column; align-items: flex-start; }
+            .stat-number { font-size: 1.3rem; }
+            .container { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="task-header">
+            <h1><i class="fas fa-video"></i> Watch & Earn</h1>
+            <p id="header-subtitle">Watch African film trailers and earn rewards</p>
+            <div class="task-stats">
+                <div class="stat-item">
+                    <div class="stat-number" id="videos-today">0</div>
+                    <div>Today</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="videos-remaining">0</div>
+                    <div>Remaining</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="total-earned">UGX 0</div>
+                    <div>Total Earned</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3><i class="fas fa-info-circle" style="color: #7B22CC;"></i> How it works:</h3>
+            <ul style="margin: 15px 0; padding-left: 20px; color: #2E2E4A;">
+                <li>Press play on each video to start watching</li>
+                <li>Watch for at least 10 seconds to unlock the claim button</li>
+                <li>Earn rewards per video based on your tier</li>
+                <li id="daily-limit-info">Upgrade your tier to watch videos daily</li>
+                <li>Daily limit resets every midnight</li>
+            </ul>
+        </div>
+
+        <!-- Internship active banner -->
+        <div id="internship-banner" class="internship-banner">
+            <i class="fas fa-graduation-cap"></i> <strong>Internship Active</strong>
+            <div class="days-left" id="internship-days-left">0</div>
+            <div>days remaining in your free trial</div>
+            <div style="font-size: 0.85rem; margin-top: 8px; opacity: 0.8;">
+                Upgrade to a paid tier before your trial ends to keep earning!
+            </div>
+            <a href="level.html" style="color: #FF7A00; font-weight: bold; font-size: 0.9rem;">
+                Upgrade Now →
+            </a>
+        </div>
+
+        <div id="free-notice" style="display:none;" class="free-overlay">
+            <i class="fas fa-lock"></i> <strong>You are on the Free tier.</strong>
+            Please recharge and upgrade to level A1 or higher to claim money.
+            <br><a href="level.html" style="color: #7B22CC; font-weight: bold;">Upgrade Now →</a>
+        </div>
+
+        <div id="limit-reached-banner" class="limit-reached-banner">
+            <i class="fas fa-exclamation-circle"></i> <strong>Daily limit reached!</strong>
+            You have watched all your videos for today. Come back tomorrow or upgrade your tier to earn more.
+            <br><a href="level.html" style="color: #FF2D2D; font-weight: bold;">Upgrade Now →</a>
+        </div>
+
+        <div class="video-list">
+            <h2 style="margin-bottom: 20px;">Today's Videos</h2>
+            <div id="video-container"></div>
+        </div>
+
+        <div class="card" style="text-align: center; margin-top: 30px;">
+            <h3>Today's Potential Earnings</h3>
+            <div style="font-size: 2.5rem; color: #7B22CC; font-weight: 800; margin: 15px 0;">
+                UGX <span id="potential-earnings">0</span>
+            </div>
+            <p id="potential-earnings-label" style="color: #5A5A7A;">Complete all videos to maximize earnings</p>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="home.html" class="nav-item">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="invest.html" class="nav-item">
+            <i class="fas fa-chart-line"></i>
+            <span>Invest</span>
+        </a>
+        <a href="task.html" class="nav-item active">
+            <i class="fas fa-tasks"></i>
+            <span>Task</span>
+        </a>
+        <a href="level.html" class="nav-item">
+            <i class="fas fa-trophy"></i>
+            <span>Level</span>
+        </a>
+        <a href="profile.html" class="nav-item">
+            <i class="fas fa-user"></i>
+            <span>Profile</span>
+        </a>
+    </nav>
+
+    <script type="module">
+        import { supabase } from './supabase.js';
+        import { getCurrentUser } from './auth.js';
+
+        const TIER_CONFIG = {
+            'free':       { reward: 0,    limit: 0  },
+            'internship': { reward: 200,  limit: 5  },
+            'A1':         { reward: 250,  limit: 5  },
+            'A2':         { reward: 375,  limit: 10 },
+            'A3':         { reward: 625,  limit: 14 },
+            'A4':         { reward: 1437, limit: 20 }
+        };
+
+        let user, profile, tierConfig, effectiveTier;
+        let watchTimers = {};
+        let claimedToday = new Set();
+
+        // Helper: show system closure UI
+        function showSystemClosedUI(message) {
+            const container = document.getElementById('video-container');
+            if (container) {
+                container.innerHTML = `
+                    <div style="text-align:center; padding: 40px 20px;">
+                        <i class="fas fa-moon" style="font-size: 3rem; color: #7B22CC; margin-bottom: 15px; display:block;"></i>
+                        <h3 style="color: var(--text-dark); margin-bottom: 10px;">System Temporarily Closed</h3>
+                        <p style="color: var(--text-light); line-height: 1.6;">${escapeHtml(message) || 'The platform is currently unavailable. Please check back later.'}</p>
+                    </div>
+                `;
+            }
+            const subtitle = document.getElementById('header-subtitle');
+            if (subtitle) subtitle.textContent = 'System temporarily closed';
+            const remainingSpan = document.getElementById('videos-remaining');
+            if (remainingSpan) remainingSpan.textContent = '0';
+            const potentialSpan = document.getElementById('potential-earnings');
+            if (potentialSpan) potentialSpan.textContent = '0';
+        }
+
+        async function init() {
+            // 1. Get authenticated user
+            const { data: { user: u }, error: authError } = await getCurrentUser();
+            if (authError || !u) {
+                window.location.href = 'index.html';
+                return;
+            }
+            user = u;
+
+            // 2. Fetch system_settings and profile
+            const [settingsRes, profileRes] = await Promise.all([
+                supabase.from('system_settings').select('*'),
+                supabase.from('profiles').select('phone, tier, balance, total_earned, tasks_completed_today, last_reset_date, internship_active, internship_start_date, created_at')
+                    .eq('id', user.id).single()
+            ]);
+
+            if (profileRes.error || !profileRes.data) {
+                console.error('Profile fetch error:', profileRes.error);
+                window.location.href = 'index.html';
+                return;
+            }
+            profile = profileRes.data;
+
+            // === SYSTEM CLOSURE CHECK (Global + Targeted) ===
+            const settingsList = settingsRes.data || [];
+            let activeClosure = null;
+
+            if (settingsList.length > 0 && profile?.phone) {
+                activeClosure = settingsList.find(setting => {
+                    if (setting.system_open === true) return false;
+
+                    // Respect exclude_phones on any row
+                    if (setting.exclude_phones && Array.isArray(setting.exclude_phones) &&
+                        setting.exclude_phones.includes(profile.phone)) {
+                        return false;
+                    }
+
+                    if (setting.target === 'all') {
+                        return true; // Global closure
+                    }
+
+                    if (setting.target === 'phone') {
+                        return setting.target_phone === profile.phone;
+                    }
+
+                    // 🔒 FIXED: Conditional target now properly respects target_phones
+                    if (setting.target === 'conditional') {
+                        // If target_phones is provided, user must be in that list
+                        if (setting.target_phones && Array.isArray(setting.target_phones) && setting.target_phones.length > 0) {
+                            if (!setting.target_phones.includes(profile.phone)) return false;
+                        }
+                        if (setting.target_tier && setting.target_tier !== profile.tier) return false;
+                        if (setting.target_min_balance != null && profile.balance < setting.target_min_balance) return false;
+                        if (setting.target_max_balance != null && profile.balance > setting.target_max_balance) return false;
+                        if (setting.target_created_after && new Date(profile.created_at) < new Date(setting.target_created_after)) return false;
+                        if (setting.target_created_before && new Date(profile.created_at) > new Date(setting.target_created_before)) return false;
+                        return true;
+                    }
+
+                    return false;
+                });
+            }
+
+            // If active closure found, block the entire task page
+            if (activeClosure) {
+                showSystemClosedUI(activeClosure.closure_message || 'System is temporarily closed for your account.');
+                return;
+            }
+
+            // 3. Sunday check (global closure)
+            const now = new Date();
+            const isSunday = now.getDay() === 0;
+            if (isSunday) {
+                document.getElementById('video-container').innerHTML = `
+                    <div style="text-align:center; padding: 40px 20px;">
+                        <i class="fas fa-moon" style="font-size: 3rem; color: #7B22CC; margin-bottom: 15px; display:block;"></i>
+                        <h3 style="color: var(--text-dark); margin-bottom: 10px;">Closed on Sundays</h3>
+                        <p style="color: var(--text-light); line-height: 1.6;">No tasks or work are done on Sundays. The platform is closed for maintenance and updates. Come back tomorrow!</p>
+                    </div>
+                `;
+                document.getElementById('header-subtitle').textContent = 'Closed today — see you tomorrow!';
+                document.getElementById('videos-remaining').textContent = '0';
+                return;
+            }
+
+            // 4. Determine effective tier (internship override)
+            if (profile.tier === 'free' && profile.internship_active) {
+                effectiveTier = 'internship';
+            } else {
+                effectiveTier = profile.tier;
+            }
+            tierConfig = TIER_CONFIG[effectiveTier] || TIER_CONFIG['free'];
+
+            // 5. Daily reset logic
+            const lastReset = new Date(profile.last_reset_date);
+            const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+            if (lastReset < todayMidnight) {
+                await supabase
+                    .from('profiles')
+                    .update({
+                        tasks_completed_today: 0,
+                        last_reset_date: now.toISOString().split('T')[0]
+                    })
+                    .eq('id', user.id);
+                profile.tasks_completed_today = 0;
+            }
+
+            // 6. Load already claimed videos today
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+            const { data: watched } = await supabase
+                .from('user_videos')
+                .select('video_id')
+                .eq('user_id', user.id)
+                .gte('watched_at', todayStart.toISOString());
+            if (watched) watched.forEach(w => claimedToday.add(w.video_id));
+
+            // 7. Fetch active videos
+            const { data: videos } = await supabase
+                .from('videos')
+                .select('*')
+                .eq('active', true)
+                .order('created_at', { ascending: false });
+
+            // 8. Update UI stats and render videos
+            updateStats();
+            renderVideos(videos || []);
+
+            // 9. Show banners
+            if (effectiveTier === 'internship') {
+                const startDate = new Date(profile.internship_start_date);
+                const expiryDate = new Date(startDate.getTime() + 4 * 24 * 60 * 60 * 1000);
+                const daysLeft = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+                const banner = document.getElementById('internship-banner');
+                if (banner) {
+                    banner.style.display = 'block';
+                    document.getElementById('internship-days-left').textContent = Math.max(daysLeft, 0);
+                }
+            } else if (effectiveTier === 'free') {
+                document.getElementById('free-notice').style.display = 'block';
+            } else if (profile.tasks_completed_today >= tierConfig.limit) {
+                document.getElementById('limit-reached-banner').style.display = 'block';
+            }
+
+            // 10. Schedule midnight reset
+            scheduleMidnightReset();
+        }
+
+        function scheduleMidnightReset() {
+            const now = new Date();
+            const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
+            const msUntilMidnight = midnight - now;
+            if (msUntilMidnight > 0 && msUntilMidnight < 86400000) {
+                setTimeout(() => {
+                    window.location.reload();
+                }, msUntilMidnight);
+            }
+        }
+
+        function updateStats() {
+            const completed = profile.tasks_completed_today;
+            const remaining = Math.max(tierConfig.limit - completed, 0);
+
+            document.getElementById('videos-today').textContent = completed;
+            document.getElementById('videos-remaining').textContent = remaining;
+            document.getElementById('total-earned').textContent = 'UGX ' + (profile.total_earned || 0).toLocaleString();
+
+            const subtitleEl = document.getElementById('header-subtitle');
+            const limitInfoEl = document.getElementById('daily-limit-info');
+            if (effectiveTier === 'internship') {
+                subtitleEl.textContent = `Internship: Watch trailers and earn UGX ${tierConfig.reward.toLocaleString()} per video`;
+                limitInfoEl.textContent = `${tierConfig.limit} videos per day during your internship`;
+            } else if (effectiveTier === 'free') {
+                subtitleEl.textContent = 'Upgrade to start earning from videos';
+                limitInfoEl.textContent = 'Upgrade to A1 or higher to start earning';
+            } else {
+                subtitleEl.textContent = `Watch African film trailers and earn UGX ${tierConfig.reward.toLocaleString()} per video`;
+                limitInfoEl.textContent = `${tierConfig.limit} videos per day on your ${effectiveTier} tier`;
+            }
+
+            document.getElementById('potential-earnings').textContent = (remaining * tierConfig.reward).toLocaleString();
+            const potentialLabel = document.getElementById('potential-earnings-label');
+            if (effectiveTier === 'free') {
+                potentialLabel.textContent = 'Upgrade your tier to start earning';
+            } else {
+                potentialLabel.textContent = `Complete remaining ${remaining} videos to earn UGX ${(remaining * tierConfig.reward).toLocaleString()}`;
+            }
+        }
+
+        function renderVideos(videos) {
+            const container = document.getElementById('video-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (!videos.length) {
+                container.innerHTML = `<div class="card" style="text-align:center; padding: 30px;">No active videos available. Check back later!</div>`;
+                return;
+            }
+
+            videos.forEach(video => {
+                const alreadyClaimed = claimedToday.has(video.id);
+                const isFree = effectiveTier === 'free';
+                const limitReached = profile.tasks_completed_today >= tierConfig.limit && !alreadyClaimed && !isFree;
+
+                const div = document.createElement('div');
+                div.className = 'video-item';
+                div.id = 'video-item-' + video.id;
+                div.innerHTML = `
+                    <h3 style="margin: 0 0 10px 0;">${escapeHtml(video.title)}</h3>
+                    <p style="color: #5A5A7A; font-size: 0.9rem; margin-bottom: 12px;">${escapeHtml(video.description || '')}</p>
+                    <div class="video-wrapper">
+                        <video
+                            id="vid-${video.id}"
+                            src="${video.video_url}"
+                            controls
+                            preload="none"
+                            poster="${video.thumbnail_url || ''}"
+                            style="width:100%; max-height:240px;">
+                        </video>
+                    </div>
+                    <div class="watch-progress">
+                        <div class="progress-bar" id="progress-${video.id}"></div>
+                    </div>
+                    <div class="claim-section">
+                        <div>
+                            <div style="font-size: 0.9rem; color: #5A5A7A;">Watch progress:</div>
+                            <div class="timer-display" id="timer-${video.id}">0s / 10s</div>
+                        </div>
+                        ${alreadyClaimed
+                            ? `<div class="completed-badge"><i class="fas fa-check-circle"></i> Claimed UGX ${tierConfig.reward.toLocaleString()}</div>`
+                            : isFree
+                                ? `<button class="btn btn-disabled" disabled>
+                                    <i class="fas fa-lock"></i> Upgrade to Claim
+                                   </button>`
+                                : `<button class="btn btn-disabled" id="claim-${video.id}" data-video-id="${video.id}" disabled>
+                                    <i class="fas fa-coins"></i> Claim UGX ${tierConfig.reward.toLocaleString()}
+                                   </button>`
+                        }
+                    </div>
+                `;
+                container.appendChild(div);
+
+                if (!alreadyClaimed && !isFree) {
+                    const videoEl = document.getElementById('vid-' + video.id);
+                    if (!videoEl) return;
+
+                    videoEl.addEventListener('play', () => {
+                        if (profile.tasks_completed_today >= tierConfig.limit) {
+                            videoEl.pause();
+                            alert('Sorry you have reached your daily limit for claiming rewards, please continue tomorrow or upgrade to earn more rewards');
+                            document.getElementById('limit-reached-banner').style.display = 'block';
+                            return;
+                        }
+                        if (!watchTimers[video.id] || !watchTimers[video.id].done) {
+                            startCounter(video.id);
+                        }
+                    });
+
+                    videoEl.addEventListener('pause', () => { stopCounter(video.id); });
+                    videoEl.addEventListener('ended', () => { stopCounter(video.id); });
+
+                    const claimBtn = document.getElementById('claim-' + video.id);
+                    if (claimBtn) {
+                        claimBtn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            claimReward(video.id);
+                        });
+                    }
+                }
+
+                if (!alreadyClaimed && isFree) {
+                    const videoEl = document.getElementById('vid-' + video.id);
+                    if (videoEl) {
+                        videoEl.addEventListener('play', () => {
+                            videoEl.pause();
+                            alert('Please recharge and upgrade to level A1 or higher to claim money');
+                        });
+                    }
+                }
+            });
+        }
+
+        function startCounter(videoId) {
+            if (watchTimers[videoId] && watchTimers[videoId].done) return;
+            if (watchTimers[videoId] && watchTimers[videoId].interval) return;
+
+            const existing = watchTimers[videoId];
+            let seconds = existing ? existing.seconds : 0;
+
+            const progressBar = document.getElementById('progress-' + videoId);
+            const timerDisplay = document.getElementById('timer-' + videoId);
+            const claimBtn = document.getElementById('claim-' + videoId);
+
+            const interval = setInterval(() => {
+                seconds++;
+                if (watchTimers[videoId]) watchTimers[videoId].seconds = seconds;
+
+                const percent = Math.min((seconds / 10) * 100, 100);
+                if (progressBar) progressBar.style.width = percent + '%';
+                if (timerDisplay) timerDisplay.textContent = `${seconds}s / 10s`;
+
+                if (seconds >= 10) {
+                    clearInterval(interval);
+                    if (watchTimers[videoId]) {
+                        watchTimers[videoId].interval = null;
+                        watchTimers[videoId].done = true;
+                    }
+                    if (progressBar) progressBar.style.background = '#00BBAA';
+                    if (timerDisplay) {
+                        timerDisplay.style.color = '#00BBAA';
+                        timerDisplay.textContent = 'Ready to claim!';
+                    }
+                    if (claimBtn) {
+                        claimBtn.classList.remove('btn-disabled');
+                        claimBtn.classList.add('btn-success');
+                        claimBtn.disabled = false;
+                    }
+                }
+            }, 1000);
+
+            watchTimers[videoId] = { interval, seconds, done: false };
+        }
+
+        function stopCounter(videoId) {
+            if (watchTimers[videoId] && watchTimers[videoId].interval) {
+                clearInterval(watchTimers[videoId].interval);
+                watchTimers[videoId].interval = null;
+            }
+        }
+
+        async function claimReward(videoId) {
+            if (profile.tasks_completed_today >= tierConfig.limit) {
+                alert('Sorry you have reached your daily limit for claiming rewards, please continue tomorrow or upgrade to earn more rewards');
+                document.getElementById('limit-reached-banner').style.display = 'block';
+                return;
+            }
+
+            const claimBtn = document.getElementById('claim-' + videoId);
+            if (!claimBtn) return;
+            claimBtn.disabled = true;
+            claimBtn.textContent = 'Processing...';
+
+            const videoEl = document.getElementById('vid-' + videoId);
+            if (videoEl) videoEl.pause();
+
+            try {
+                const { error: watchError } = await supabase
+                    .from('user_videos')
+                    .insert({
+                        user_id: user.id,
+                        video_id: videoId,
+                        watch_duration: 10,
+                        reward_earned: tierConfig.reward,
+                        claimed: true
+                    });
+
+                if (watchError) {
+                    if (watchError.code === '23505') {
+                        alert('You have already claimed this video today.');
+                        claimBtn.textContent = 'Already Claimed';
+                        return;
+                    }
+                    throw watchError;
+                }
+
+                profile.tasks_completed_today += 1;
+                profile.balance += tierConfig.reward;
+                profile.total_earned += tierConfig.reward;
+                claimedToday.add(videoId);
+
+                await supabase
+                    .from('profiles')
+                    .update({
+                        balance: profile.balance,
+                        total_earned: profile.total_earned,
+                        tasks_completed_today: profile.tasks_completed_today
+                    })
+                    .eq('id', user.id);
+
+                updateStats();
+
+                const claimSection = claimBtn.parentElement;
+                if (claimSection) {
+                    claimSection.innerHTML = `
+                        <div class="completed-badge">
+                            <i class="fas fa-check-circle"></i> Claimed UGX ${tierConfig.reward.toLocaleString()}
+                        </div>
+                        <button class="btn btn-disabled" disabled style="background:#ccc;">
+                            <i class="fas fa-check"></i> Claimed
+                        </button>
+                    `;
+                }
+
+                if (profile.tasks_completed_today >= tierConfig.limit) {
+                    document.getElementById('limit-reached-banner').style.display = 'block';
+                    alert('Daily limit reached! You have claimed all available videos today. Come back tomorrow or upgrade to earn more.');
+                } else {
+                    alert(`Success! UGX ${tierConfig.reward.toLocaleString()} has been added to your wallet.`);
+                }
+
+            } catch (err) {
+                console.error(err);
+                claimBtn.disabled = false;
+                claimBtn.textContent = `Claim UGX ${tierConfig.reward.toLocaleString()}`;
+                alert('Error claiming reward: ' + (err.message || 'Unknown error'));
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+                return c;
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>

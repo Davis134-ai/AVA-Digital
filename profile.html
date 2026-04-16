@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js');
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVA-Digital - Profile</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ----- LIGHT THEME · AVA‑DIGITAL COLOR SYSTEM ----- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: rgb(255, 255, 255);
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            color: #1A1A2E;
+            line-height: 1.5;
+            padding-bottom: 80px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px 24px;
+        }
+
+        /* Profile header */
+        .profile-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #7B22CC, #CC1177);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            color: white;
+            border: 5px solid white;
+            box-shadow: 0 12px 25px -8px rgba(123,34,204,0.3);
+        }
+
+        .profile-name {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #1E1E3A;
+            margin-bottom: 6px;
+        }
+
+        .profile-level {
+            background: linear-gradient(135deg, #FF7A00, #CC1177);
+            color: white;
+            padding: 6px 18px;
+            border-radius: 40px;
+            display: inline-block;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .profile-info {
+            color: #5A5A7A;
+        }
+
+        /* Quick actions */
+        .quick-actions {
+            display: flex;
+            gap: 15px;
+            margin: 30px 0;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            background: white;
+            border: 2px solid #7B22CC;
+            border-radius: 50px;
+            padding: 12px 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #1E1E3A;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        }
+
+        .action-btn i {
+            color: #7B22CC;
+        }
+
+        .action-btn:hover {
+            background: #7B22CC;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px -8px rgba(123,34,204,0.3);
+        }
+
+        .action-btn:hover i {
+            color: white;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #7B22CC, #CC1177);
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 14px 28px;
+            border-radius: 40px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0 12px 18px -8px rgba(123,34,204,0.3);
+            transition: transform 0.15s, box-shadow 0.2s;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #1133DD, #00BBAA);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 18px 25px -10px rgba(204,17,119,0.4);
+        }
+
+        /* Wallet section */
+        .wallet-card {
+            background: linear-gradient(135deg, #7B22CC, #CC1177);
+            color: white;
+            padding: 30px;
+            border-radius: 28px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 35px -8px rgba(123,34,204,0.3);
+        }
+
+        .wallet-card .label {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .wallet-card .balance {
+            font-size: 3.2rem;
+            font-weight: 800;
+            margin: 15px 0;
+        }
+
+        .wallet-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        /* Income stats grid */
+        .income-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .stat-card {
+            background: #FFFFFF;
+            padding: 24px 20px;
+            border-radius: 24px;
+            box-shadow: 0 12px 25px -8px rgba(0,0,0,0.05), 0 0 0 1px #F0EEF8;
+            border-left: 5px solid #7B22CC;
+        }
+
+        .stat-card .stat-label {
+            color: #5A5A7A;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #7B22CC;
+            margin: 10px 0 5px;
+        }
+
+        .stat-card .stat-detail {
+            font-size: 0.85rem;
+            color: #5A5A7A;
+        }
+
+        /* Referral section */
+        .referral-section {
+            background: linear-gradient(135deg, #1A1A3A, #2A1A44);
+            color: white;
+            padding: 30px;
+            border-radius: 28px;
+            margin: 40px 0;
+            text-align: center;
+            box-shadow: 0 20px 30px -10px rgba(123,34,204,0.2);
+        }
+
+        .referral-code {
+            background: rgba(255,255,255,0.1);
+            padding: 16px;
+            border-radius: 18px;
+            font-size: 1.6rem;
+            letter-spacing: 3px;
+            margin: 20px 0;
+            font-family: monospace;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .view-referrals-link {
+            display: block;
+            background: linear-gradient(135deg, #00BBAA, #1A88FF);
+            color: white;
+            text-align: center;
+            padding: 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 1rem;
+            text-decoration: none;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 20px -6px rgba(0,187,170,0.3);
+            transition: transform 0.1s;
+        }
+
+        .view-referrals-link:active { transform: scale(0.98); }
+
+        /* Account info card */
+        .card {
+            background: #FFFFFF;
+            border-radius: 28px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 15px 30px -10px rgba(0,0,0,0.05), 0 0 0 1px rgba(123,34,204,0.06);
+        }
+
+        .card h2 {
+            color: #1E1E3A;
+            margin-bottom: 24px;
+            font-weight: 700;
+        }
+
+        .card h4 {
+            color: #1E1E3A;
+            margin-bottom: 6px;
+        }
+
+        .card p {
+            color: #5A5A7A;
+            margin-bottom: 16px;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 0;
+            box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .nav-item {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    text-decoration: none;
+                    color: #6A6A8A;
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                    transition: all 0.2s;
+                    padding: 6px 14px;
+                    border-radius: 40px;
+        }
+
+        .nav-item i {
+            font-size: 1.3rem;
+            margin-bottom: 4px;
+        }
+
+        .nav-item.active {
+            color: #CC1177;
+                    background: rgba(204,17,119,0.04);
+        }
+
+        h2 { color: #1E1E3A; }
+
+        /* Responsive */
+        @media (max-width: 500px) {
+            .container { padding: 16px; }
+            .profile-name { font-size: 1.6rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="profile-avatar">
+                <i class="fas fa-user"></i>
+            </div>
+            
+            <div class="profile-name" id="user-name">Loading...</div>
+            <div class="profile-level" id="user-level">Level A1 Member</div>
+            
+            <p class="profile-info">
+                <i class="fas fa-phone"></i> <span id="user-phone-top">...</span>
+                <span style="margin: 0 10px;">•</span>
+                <i class="fas fa-calendar"></i> <span id="user-joined">...</span>
+            </p>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="payments.html" class="action-btn">
+                <i class="fas fa-edit"></i> Manage Payments
+            </a>
+            <a href="#" class="action-btn" onclick="alert('Settings coming soon!')">
+                <i class="fas fa-cog"></i> Settings
+            </a>
+            <a href="support.html" class="btn">Support</a>
+        </div>
+
+        <!-- Wallet Section -->
+        <div class="wallet-card">
+            <div class="label">Total Balance</div>
+            <div class="balance" id="total-balance">UGX 0</div>
+            <div class="wallet-actions">
+                <a href="recharge.html" class="btn" style="background: white; color: #7B22CC; box-shadow: none;">
+                    <i class="fas fa-plus"></i> Recharge
+                </a>
+                <a href="withdraw.html" class="btn btn-secondary" style="box-shadow: none;">
+                    <i class="fas fa-download"></i> Withdraw
+                </a>
+            </div>
+        </div>
+
+        <!-- Income Statistics -->
+        <h2 style="text-align: center; margin: 40px 0 20px;">Income Statistics</h2>
+        
+        <div class="income-stats">
+            <div class="stat-card">
+                <div class="stat-label">Yesterday's Income</div>
+                <div class="stat-value" id="yesterday-income">UGX 0</div>
+                <div class="stat-detail">
+                    <i class="fas fa-video"></i> <span id="yesterday-videos">0</span> videos watched
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">Today's Income</div>
+                <div class="stat-value" id="today-income">UGX 0</div>
+                <div class="stat-detail">
+                    <i class="fas fa-video"></i> <span id="today-videos">0</span> videos watched
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">This Week's Income</div>
+                <div class="stat-value" id="week-income">UGX 0</div>
+                <div class="stat-detail">
+                    <i class="fas fa-calendar-week"></i> Current week
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">This Month's Income</div>
+                <div class="stat-value" id="month-income">UGX 0</div>
+                <div class="stat-detail">
+                    <i class="fas fa-calendar-alt"></i> <span id="current-month">...</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">Total Income</div>
+                <div class="stat-value" id="total-income">UGX 0</div>
+                <div class="stat-detail">
+                    <i class="fas fa-chart-line"></i> All time
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">Referral Commission</div>
+                <div class="stat-value" id="referral-commission">UGX 0</div>
+                <div class="stat-detail">
+                    <i class="fas fa-user-friends"></i> From <span id="referral-count">0</span> referrals
+                </div>
+            </div>
+        </div>
+
+        <!-- Referral Section -->
+        <div class="referral-section">
+            <h2 style="color: white; margin-bottom: 15px;">
+                <i class="fas fa-user-friends"></i> Referral Program
+            </h2>
+            <p>Invite friends and earn 10% commission on their first investment!</p>
+            
+            <div class="referral-code" id="user-referral-code">
+                AVA-XXXXXX
+            </div>
+            
+            <button class="btn" style="background: white; color: #7B22CC;" onclick="copyReferralCode()">
+                <i class="fas fa-copy"></i> Copy Referral Link
+            </button>
+            
+            <div style="margin-top: 20px; font-size: 0.9rem; opacity: 0.9;">
+                <i class="fas fa-info-circle"></i> Share your code with friends to start earning
+            </div>
+        </div>
+
+        <a href="referrals.html" class="view-referrals-link">
+            <i class="fas fa-user-friends"></i> View My Referrals
+        </a>
+
+        <!-- Account Information -->
+        <div class="card">
+            <h2>Account Information</h2>
+            
+            <div style="display: grid; gap: 20px;">
+                <div>
+                    <h4><i class="fas fa-phone"></i> Phone Number</h4>
+                    <p id="user-phone">...</p>
+                </div>
+                
+                <div>
+                    <h4><i class="fas fa-id-card"></i> Account Status</h4>
+                    <p><span style="color: #00BBAA; font-weight: bold;">Active</span> • Verified User</p>
+                </div>
+                
+                <div>
+                    <h4><i class="fas fa-trophy"></i> Membership Level</h4>
+                    <p><span style="color: #7B22CC; font-weight: bold;" id="user-tier-bottom">...</span></p>
+                </div>
+                
+                <div>
+                    <h4><i class="fas fa-shield-alt"></i> Security</h4>
+                    <p>Last login: Today, 10:30 AM</p>
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px; text-align: center;">
+                <h3 style="margin-bottom: 16px;">Don't have cash? You can still join</h3>
+                <button class="btn btn-secondary" onclick="window.location.href='https://signal.me/#eu/X_g_n9iKhd9o2K9Uw-Ttir8S04RyW40GarqcuRt51ysF2I0qSmBPLJ-AI45zYXQb'">
+                    <i class="fas fa-arrow-right"></i> Check Eligibility
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="home.html" class="nav-item">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="invest.html" class="nav-item">
+            <i class="fas fa-chart-line"></i>
+            <span>Invest</span>
+        </a>
+        <a href="task.html" class="nav-item">
+            <i class="fas fa-tasks"></i>
+            <span>Task</span>
+        </a>
+        <a href="level.html" class="nav-item">
+            <i class="fas fa-trophy"></i>
+            <span>Level</span>
+        </a>
+        <a href="profile.html" class="nav-item active">
+            <i class="fas fa-user"></i>
+            <span>Profile</span>
+        </a>
+    </nav>
+
+    <script type="module">
+        import { supabase } from './supabase.js';
+        import { getCurrentUser } from './auth.js';
+
+        function fmt(amount) {
+            return 'UGX ' + (amount || 0).toLocaleString();
+        }
+
+        function getDateRange() {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            const weekStart = new Date(today);
+            weekStart.setDate(today.getDate() - today.getDay());
+
+            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+            return { today, yesterday, weekStart, monthStart };
+        }
+
+        async function loadProfile() {
+            const { data: { user }, error: userError } = await getCurrentUser();
+            if (userError || !user) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Load profile
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('phone, tier, balance, total_earned, referral_code, created_at')
+                .eq('id', user.id)
+                .single();
+
+            if (profile) {
+                const joinDate = new Date(profile.created_at);
+                const monthName = joinDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+                document.getElementById('user-name').textContent = profile.phone;
+                document.getElementById('user-phone-top').textContent = profile.phone;
+                document.getElementById('user-phone').textContent = profile.phone;
+                document.getElementById('user-level').textContent = `Level ${profile.tier} Member`;
+                document.getElementById('user-tier-bottom').textContent = profile.tier;
+                document.getElementById('user-joined').textContent = 'Joined ' + monthName;
+                document.getElementById('total-balance').textContent = fmt(profile.balance);
+                document.getElementById('total-income').textContent = fmt(profile.total_earned);
+                
+                // Show referral code with AVA prefix (frontend-only transformation)
+                let refCode = profile.referral_code || 'AVA-XXXXXX';
+                if (refCode.startsWith('AFRITRAILER-')) {
+                    refCode = 'AVA-' + refCode.substring(12);
+                }
+                document.getElementById('user-referral-code').textContent = refCode;
+                               
+                document.getElementById('current-month').textContent = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+            }
+
+            // Load video watch earnings
+            const { data: watches } = await supabase
+                .from('user_videos')
+                .select('reward_earned, watched_at')
+                .eq('user_id', user.id);
+
+            if (watches) {
+                const { today, yesterday, weekStart, monthStart } = getDateRange();
+
+                let todayEarned = 0, todayCount = 0;
+                let yesterdayEarned = 0, yesterdayCount = 0;
+                let weekEarned = 0;
+                let monthEarned = 0;
+
+                watches.forEach(w => {
+                    const watchDate = new Date(w.watched_at);
+                    const watchDay = new Date(watchDate.getFullYear(), watchDate.getMonth(), watchDate.getDate());
+
+                    if (watchDay.getTime() === today.getTime()) {
+                        todayEarned += w.reward_earned;
+                        todayCount++;
+                    }
+                    if (watchDay.getTime() === yesterday.getTime()) {
+                        yesterdayEarned += w.reward_earned;
+                        yesterdayCount++;
+                    }
+                    if (watchDate >= weekStart) weekEarned += w.reward_earned;
+                    if (watchDate >= monthStart) monthEarned += w.reward_earned;
+                });
+
+                document.getElementById('today-income').textContent = fmt(todayEarned);
+                document.getElementById('today-videos').textContent = todayCount;
+                document.getElementById('yesterday-income').textContent = fmt(yesterdayEarned);
+                document.getElementById('yesterday-videos').textContent = yesterdayCount;
+                document.getElementById('week-income').textContent = fmt(weekEarned);
+                document.getElementById('month-income').textContent = fmt(monthEarned);
+            }
+
+            // Load referral commission and count
+            const { data: referrals } = await supabase
+                .from('referrals')
+                .select('commission_earned')
+                .eq('referrer_id', user.id);
+
+            if (referrals) {
+                const totalCommission = referrals.reduce((sum, r) => sum + r.commission_earned, 0);
+                document.getElementById('referral-commission').textContent = fmt(totalCommission);
+                document.getElementById('referral-count').textContent = referrals.length;
+            }
+        }
+
+        function copyReferralCode() {
+            const tier = document.getElementById('user-tier-bottom').textContent.trim();
+            if (!['A1', 'A2', 'A3', 'A4'].includes(tier)) {
+                alert('You need to be on tier A1 or above to share referral links. Upgrade your tier to unlock this feature.');
+                return;
+            }
+            const referralCode = document.getElementById('user-referral-code').textContent;
+            const link = window.location.origin + '/register.html?ref=' + referralCode;
+            navigator.clipboard.writeText(link).then(() => {
+                alert('Referral link copied to clipboard!');
+            });
+        }
+
+        window.copyReferralCode = copyReferralCode;
+        loadProfile();
+    </script>
+</body>
+</html>

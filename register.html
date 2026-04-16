@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js');
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVA-Digital - Register</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ----- LIGHT THEME · AVA‑DIGITAL COLOR SYSTEM ----- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: rgb(255, 255, 255);
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 24px;
+            color: #1A1A2E;
+        }
+
+        .container {
+            max-width: 420px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .header h1 {
+            font-size: 2.4rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #FF7A00, #CC1177, #7B22CC);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .header h1 i {
+            background: linear-gradient(135deg, #FF7A00, #CC1177, #7B22CC);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-right: 6px;
+        }
+
+        .header p {
+            color: #5A5A7A;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .card {
+            background: #FFFFFF;
+            padding: 36px 30px;
+            border-radius: 28px;
+            box-shadow: 0 20px 35px -8px rgba(0,0,0,0.08), 
+                        0 8px 18px -6px rgba(0,0,0,0.05),
+                        0 0 0 1px rgba(123, 34, 204, 0.08) inset;
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #1E1E3A;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 14px 18px;
+            background: #F9F9FF;
+            border: 2px solid #E2E2F0;
+            border-radius: 18px;
+            color: #111122;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #7B22CC;
+            box-shadow: 0 0 0 4px rgba(123, 34, 204, 0.12);
+            background: #FFFFFF;
+        }
+
+        .input-group input::placeholder {
+            color: #9A9AB0;
+            font-weight: 400;
+        }
+
+        .phone-wrapper {
+            display: flex;
+            align-items: stretch;
+        }
+
+        .phone-prefix {
+            background: #F0EEF8;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            border: 2px solid #E2E2F0;
+            border-right: none;
+            border-radius: 18px 0 0 18px;
+            color: #2C2C4A;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .phone-wrapper input {
+            border-radius: 0 18px 18px 0 !important;
+            border-left: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #7B22CC, #CC1177);
+            border: none;
+            color: white;
+            font-weight: 700;
+            font-size: 1.15rem;
+            padding: 16px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.15s, box-shadow 0.25s;
+            box-shadow: 0 12px 20px -8px rgba(123, 34, 204, 0.35), 0 4px 8px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255,255,255,0.2);
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 28px -10px rgba(204, 17, 119, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 8px 15px -5px rgba(123,34,204,0.3);
+        }
+
+        a {
+            color: #1A88FF;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        a:hover {
+            color: #7B22CC;
+            text-decoration: underline;
+        }
+
+        .card p {
+            color: #5A5A7A;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-film"></i> AVA-Digital</h1>
+            <p>Create account</p>
+        </div>
+        <div class="card">
+            <form id="registerForm">
+                <div class="input-group">
+                    <label for="phone">Phone Number</label>
+                    <div class="phone-wrapper">
+                        <span class="phone-prefix">+256</span>
+                        <input type="tel" id="phone" placeholder="701234567" maxlength="9" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="••••••••" required>
+                </div>
+                <div class="input-group">
+                    <label for="confirm">Confirm Password</label>
+                    <input type="password" id="confirm" placeholder="••••••••" required>
+                </div>
+                <div class="input-group">
+                    <label for="referral">Referral Code (optional)</label>
+                    <input type="text" id="referral" placeholder="AVA-XXXXXX">
+                </div>
+                <button type="submit" class="btn">Register</button>
+            </form>
+            <p style="text-align:center; margin-top:24px;">Already have an account? <a href="index.html">Login</a></p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { register } from './auth.js'
+
+        // Prevent more than 9 digits and warn if starts with 0
+        document.getElementById('phone').addEventListener('input', function() {
+            let value = this.value.replace(/\D/g, '');
+            if (value.length > 9) {
+                value = value.substring(0, 9);
+                alert('Do not put 0 in front of your phone number, just start with 7');
+            }
+            this.value = value;
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault()
+            const rawPhone = document.getElementById('phone').value.replace(/\D/g, '');
+
+            // Check first digit is 7
+            if (rawPhone.charAt(0) !== '7') {
+                alert('Put in a correct number that starts with 7');
+                return;
+            }
+
+            // Check length is exactly 9
+            if (rawPhone.length !== 9) {
+                alert('Please enter a valid 9 digit phone number starting with 7');
+                return;
+            }
+
+            const phone = '+256' + rawPhone;
+            const password = document.getElementById('password').value;
+            const confirm = document.getElementById('confirm').value;
+            const referral = document.getElementById('referral').value.trim() || null;
+
+            if (password !== confirm) {
+                alert('Passwords do not match');
+                return;
+            }
+            try {
+                await register(phone, password, referral);
+                alert('Registration successful! Please login.');
+                window.location.href = 'index.html';
+            } catch (err) {
+                alert('Registration failed: ' + err.message);
+            }
+        });
+
+        // Auto-fill referral code from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const refCode = urlParams.get('ref');
+        if (refCode) {
+            document.getElementById('referral').value = refCode;
+        }
+    </script>
+</body>
+</html>

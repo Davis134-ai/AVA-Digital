@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js');
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVA-Digital - Admin Panel</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="container">
+  <h2>Admin Panel</h2>
+  <div id="pendingRequests"></div>
+  <div id="users"></div>
+</div>
+<script type="module">
+  import { supabase } from './supabase.js';
+  import { getCurrentUser } from './auth.js';
+
+  async function checkAdmin() {
+    const { data: { user } } = await getCurrentUser();
+    if (!user || user.email !== 'unitytrade33@gmail.com') {
+      window.location.href = 'index.html';
+      return;
+    }
+    loadRequests();
+    loadUsers();
+  }
+
+  async function loadRequests() {
+    const { data } = await supabase.from('payment_requests').select('*').eq('status', 'pending');
+    const div = document.getElementById('pendingRequests');
+    div.innerHTML = '<h3>Pending Requests</h3>';
+    data.forEach(req => {
+      div.innerHTML += `
+        <div>
+          ${req.type} - ${req.amount} UGX - ${req.phone}
+          <button onclick="approve('${req.id}')">Approve</button>
+          <button onclick="reject('${req.id}')">Reject</button>
+        </div>
+      `;
+    });
+  }
+
+  window.approve = async (id) => {
+    const { data: req } = await supabase.from('payment_requests').select('*').eq('id', id).single();
+    // Handle based on type
+    if (req.type === 'tier_upgrade') {
+      await supabase.from('profiles').update({ tier: req.tier }).eq('id', req.user_id);
+      // Add commission to referrer
+      const { data: profile } = await supabase.from('profiles').select('referred_by').eq('id', req.user_id).single();
+      if (profile.referred_by) {
+        const commission = Math.floor(req.amount * 0.1);
+        await supabase.from('profiles').update({ balance: supabase.raw('balance + ' + commission) }).eq('id', profile.referred_by);
+        await supabase.from('referrals').insert({ referrer_id: profile.referred_by, referred_user_id: req.user_id, commission_earned: commission });
+      }
+    } else if (req.type === 'recharge') {
+      await supabase.from('profiles').update({ balance: supabase.raw('balance + ' + req.amount) }).eq('id', req.user_id);
+    } else if (req.type === 'withdrawal') {
+      // already deducted, just mark approved
+    }
+    await supabase.from('payment_requests').update({ status: 'approved' }).eq('id', id);
+    loadRequests();
+  };
+
+  window.reject = async (id) => {
+    const { data: req } = await supabase.from('payment_requests').select('*').eq('id', id).single();
+    if (req.type === 'withdrawal') {
+      // refund balance
+      await supabase.from('profiles').update({ balance: supabase.raw('balance + ' + req.amount) }).eq('id', req.user_id);
+    }
+    await supabase.from('payment_requests').update({ status: 'rejected' }).eq('id', id);
+    loadRequests();
+  };
+
+  async function loadUsers() {
+    const { data } = await supabase.from('profiles').select('*');
+    const div = document.getElementById('users');
+    div.innerHTML = '<h3>Users</h3><table>...</table>';
+    // render table with ability to edit balance and tier
+  }
+
+  checkAdmin();
+</script>
+</body>
+</html>

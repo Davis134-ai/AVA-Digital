@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js');
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVA-Digital - Levels</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ----- LIGHT THEME · AVA‑DIGITAL COLOR SYSTEM ----- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: rgb(255, 255, 255);
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            color: #1A1A2E;
+            line-height: 1.5;
+            padding-bottom: 80px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px 24px;
+        }
+
+        /* Header with gradient */
+        .levels-header {
+            background: linear-gradient(135deg, #FF2D2D, #FF7A00, #CC1177, #7B22CC, #1133DD);
+            color: white;
+            padding: 40px 30px;
+            border-radius: 32px;
+            margin-bottom: 32px;
+            text-align: center;
+            box-shadow: 0 20px 35px -8px rgba(123, 34, 204, 0.25);
+        }
+
+        .levels-header h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+        }
+
+        .levels-header p {
+            opacity: 0.95;
+            font-weight: 500;
+        }
+
+        .level-indicator {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            margin: 24px 0 8px;
+        }
+
+        .level-step {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 1rem;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .level-step.active {
+            background: white;
+            color: #7B22CC;
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .level-step.connector {
+            width: 30px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 0;
+        }
+
+        /* Cards */
+        .card, .tier-card {
+            background: #FFFFFF;
+            border-radius: 28px;
+            padding: 30px;
+            margin-bottom: 24px;
+            box-shadow: 0 15px 30px -10px rgba(0,0,0,0.05), 0 0 0 1px rgba(123, 34, 204, 0.06);
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 18px;
+            margin: 25px 0 10px;
+        }
+
+        .benefit-item {
+            background: #F9F7FF;
+            padding: 22px 16px;
+            border-radius: 20px;
+            text-align: center;
+            border-left: 4px solid #CC1177;
+        }
+
+        .benefit-icon {
+            font-size: 2.2rem;
+            color: #7B22CC;
+            margin-bottom: 12px;
+        }
+
+        .benefit-item h4 {
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #1E1E3A;
+        }
+
+        .benefit-item p {
+            font-size: 0.9rem;
+            color: #5A5A7A;
+        }
+
+        .tier-earning {
+            background: rgba(123, 34, 204, 0.05);
+            padding: 16px 18px;
+            border-radius: 18px;
+            margin: 18px 0;
+            text-align: center;
+            border: 1px solid rgba(123,34,204,0.1);
+        }
+
+        .disclaimer {
+            background: #FFF8E7;
+            border-left: 5px solid #FF7A00;
+            padding: 18px 22px;
+            border-radius: 18px;
+            margin-top: 30px;
+            text-align: center;
+            color: #1E1E3A;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #7B22CC, #CC1177);
+            border: none;
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+            padding: 14px 28px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.2s;
+            box-shadow: 0 12px 18px -8px rgba(123,34,204,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 18px 25px -10px rgba(204,17,119,0.4);
+        }
+
+        .btn-disabled {
+            background: #C0C0D0 !important;
+            box-shadow: none !important;
+            cursor: not-allowed !important;
+            opacity: 0.6;
+            transform: none !important;
+        }
+
+        /* Internship card */
+        .internship-card {
+            background: linear-gradient(135deg, #1A1A3A, #2A1A44);
+            border-radius: 28px;
+            padding: 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 15px 25px -10px rgba(123,34,204,0.2);
+            border-left: 6px solid #FF7A00;
+            color: white;
+        }
+
+        .internship-badge {
+            display: inline-block;
+            background: #FF7A00;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 14px;
+            border-radius: 30px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .internship-card .tier-name {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #FF7A00;
+        }
+
+        .internship-card .tier-earning {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .internship-card ul li {
+            color: rgba(255,255,255,0.9);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .internship-countdown {
+            background: rgba(255,122,0,0.15);
+            border: 1px solid #FF7A00;
+            border-radius: 20px;
+            padding: 16px;
+            text-align: center;
+            margin: 18px 0;
+        }
+
+        .internship-countdown .days-left {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #FF7A00;
+        }
+
+        .internship-expired {
+            background: rgba(255,45,45,0.15);
+            border: 1px solid #FF2D2D;
+            border-radius: 20px;
+            padding: 16px;
+            text-align: center;
+            margin: 18px 0;
+            color: #FF6B6B;
+        }
+
+        /* Tier cards (light) */
+        .tier-card .tier-name {
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .tier-card .tier-price {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #1E1E3A;
+        }
+
+        .tier-card ul {
+            list-style: none;
+            margin: 20px 0;
+        }
+
+        .tier-card ul li {
+            padding: 10px 0;
+            border-bottom: 1px solid #F0EEF8;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 0;
+            box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .nav-item {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    text-decoration: none;
+                    color: #6A6A8A;
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                    transition: all 0.2s;
+                    padding: 6px 14px;
+                    border-radius: 40px;
+        }
+
+        .nav-item i {
+            font-size: 1.3rem;
+            margin-bottom: 4px;
+        }
+
+        .nav-item.active {
+            color: #CC1177;
+                    background: rgba(204,17,119,0.04);
+        }
+        h2 {
+            color: #1E1E3A;
+            font-weight: 700;
+        }
+
+        /* Responsive */
+        @media (max-width: 500px) {
+            .container { padding: 16px; }
+            .levels-header { padding: 30px 20px; }
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #1133DD, #00BBAA);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Levels Header -->
+        <div class="levels-header">
+            <h1><i class="fas fa-trophy"></i> Membership Levels</h1>
+            <p>Upgrade your membership to unlock exclusive benefits</p>
+            <div class="level-indicator">
+                <div class="level-step" id="step-A1">A1</div>
+                <div class="level-step connector"></div>
+                <div class="level-step" id="step-A2">A2</div>
+                <div class="level-step connector"></div>
+                <div class="level-step" id="step-A3">A3</div>
+                <div class="level-step connector"></div>
+                <div class="level-step" id="step-A4">A4</div>
+            </div>
+            <p style="margin-top: 15px; opacity: 0.95;">
+                Current Level: <strong id="current-tier-display">Loading...</strong> • Upgrade to earn more!
+            </p>
+        </div>
+
+        <!-- Benefits Overview -->
+        <div class="card">
+            <h2 style="text-align: center; margin-bottom: 20px;">Level Benefits</h2>
+            <div class="benefits-grid">
+                <div class="benefit-item">
+                    <div class="benefit-icon"><i class="fas fa-coins"></i></div>
+                    <h4>Higher Rewards</h4>
+                    <p>Earn more per video watched</p>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon"><i class="fas fa-video"></i></div>
+                    <h4>More Videos</h4>
+                    <p>Watch more videos daily</p>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon"><i class="fas fa-percentage"></i></div>
+                    <h4>Better Rates</h4>
+                    <p>Higher investment returns</p>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon"><i class="fas fa-user-friends"></i></div>
+                    <h4>Priority Support</h4>
+                    <p>24/7 dedicated assistance</p>
+                </div>
+            </div>
+        </div>
+
+        <h2 style="margin: 40px 0 20px 0; text-align: center;">Choose Your Level</h2>
+
+        <!-- Internship Card -->
+        <div class="internship-card" id="internship-card" style="display:none;">
+            <div class="internship-badge">🎓 Free Trial</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <div>
+                    <div class="tier-name">Internship</div>
+                    <p style="opacity:0.8; margin: 5px 0;">4-Day Free Trial</p>
+                </div>
+                <div style="font-size: 1.8rem; font-weight: bold; color: #FF7A00;">FREE</div>
+            </div>
+
+            <div class="tier-earning">
+                <strong>UGX 200 per video • 5 videos per day</strong>
+                <p style="margin: 5px 0; opacity:0.9;">Daily earning potential: UGX 1,000</p>
+            </div>
+
+            <ul style="list-style: none; margin: 20px 0;">
+                <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);"><i class="fas fa-check" style="color: #FF7A00; margin-right: 10px;"></i> UGX 200 per video</li>
+                <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);"><i class="fas fa-check" style="color: #FF7A00; margin-right: 10px;"></i> 5 videos daily limit</li>
+                <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);"><i class="fas fa-check" style="color: #FF7A00; margin-right: 10px;"></i> 4 days access only</li>
+                <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);"><i class="fas fa-check" style="color: #FF7A00; margin-right: 10px;"></i> No payment required</li>
+                <li style="padding: 8px 0;"><i class="fas fa-times" style="color: #FF2D2D; margin-right: 10px;"></i> One time only per account</li>
+            </ul>
+
+            <div id="internship-countdown" style="display:none;" class="internship-countdown">
+                <div class="days-left" id="days-left">0</div>
+                <div>days remaining in your internship</div>
+            </div>
+
+            <div id="internship-expired" style="display:none;" class="internship-expired">
+                <i class="fas fa-lock"></i> Your internship period has ended. Please upgrade to a paid tier to continue earning.
+            </div>
+
+            <div style="text-align: right; margin-top: 15px;">
+                <button class="btn" id="btn-internship">
+                    <i class="fas fa-graduation-cap"></i> Join Internship
+                </button>
+            </div>
+        </div>
+
+        <!-- Level A1 -->
+        <div class="tier-card" style="border-left: 6px solid #7B22CC;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <div>
+                    <div class="tier-name" style="color: #7B22CC;">A1</div>
+                    <p style="color: #5A5A7A;">Starter Level</p>
+                </div>
+                <div class="tier-price">UGX 30,000</div>
+            </div>
+            <div class="tier-earning">
+                <strong>UGX 250 per video • 5 videos per day</strong>
+                <p>Daily earning potential: UGX 1,250</p>
+            </div>
+            <ul>
+                <li><i class="fas fa-check" style="color: #00BBAA; margin-right: 10px;"></i> UGX 250 per video</li>
+                <li><i class="fas fa-check" style="color: #00BBAA; margin-right: 10px;"></i> 5 videos daily limit</li>
+                <li><i class="fas fa-check" style="color: #00BBAA; margin-right: 10px;"></i> Basic support</li>
+                <li><i class="fas fa-check" style="color: #00BBAA; margin-right: 10px;"></i> Standard investment rates</li>
+            </ul>
+            <div style="text-align: right;">
+                <button class="btn" id="btn-A1" onclick="upgrade('A1', 30000)">
+                    <i class="fas fa-arrow-up"></i> Join Now
+                </button>
+            </div>
+        </div>
+
+        <!-- Level A2 -->
+        <div class="tier-card" style="border-left: 6px solid #00BBAA;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <div>
+                    <div class="tier-name" style="color: #00BBAA;">A2</div>
+                    <p style="color: #5A5A7A;">Pro Level</p>
+                </div>
+                <div class="tier-price">UGX 90,000</div>
+            </div>
+            <div class="tier-earning">
+                <strong>UGX 375 per video • 10 videos per day</strong>
+                <p>Daily earning potential: UGX 3,750</p>
+            </div>
+            <ul>
+                <li><i class="fas fa-check" style="color: #00BBAA; margin-right: 10px;"></i> UGX 375 per video</li>
+                <li><i class="fas fa-check" style="color: #00BBAA; margin-right: 10px;"></i> 10 videos daily limit</li>
+                <li><i class="fas fa-check" style="color: #00BBAA; margin-right: 10px;"></i> Priority support</li>
+                <li><i class="fas fa-check" style="color: #00BBAA; margin-right: 10px;"></i> 5% higher investment returns</li>
+                <li><i class="fas fa-check" style="color: #00BBAA; margin-right: 10px;"></i> Access to premium content</li>
+            </ul>
+            <div style="text-align: right;">
+                <button class="btn" id="btn-A2" onclick="upgrade('A2', 90000)">
+                    <i class="fas fa-arrow-up"></i> Join Now
+                </button>
+            </div>
+        </div>
+
+        <!-- Level A3 -->
+        <div class="tier-card" style="border-left: 6px solid #1A88FF;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <div>
+                    <div class="tier-name" style="color: #1A88FF;">A3</div>
+                    <p style="color: #5A5A7A;">Premium Level</p>
+                </div>
+                <div class="tier-price">UGX 210,000</div>
+            </div>
+            <div class="tier-earning">
+                <strong>UGX 625 per video • 14 videos per day</strong>
+                <p>Daily earning potential: UGX 8,750</p>
+            </div>
+            <ul>
+                <li><i class="fas fa-check" style="color: #1A88FF; margin-right: 10px;"></i> UGX 625 per video</li>
+                <li><i class="fas fa-check" style="color: #1A88FF; margin-right: 10px;"></i> 14 videos daily limit</li>
+                <li><i class="fas fa-check" style="color: #1A88FF; margin-right: 10px;"></i> VIP support</li>
+                <li><i class="fas fa-check" style="color: #1A88FF; margin-right: 10px;"></i> 10% higher investment returns</li>
+                <li><i class="fas fa-check" style="color: #1A88FF; margin-right: 10px;"></i> Early access to new features</li>
+                <li><i class="fas fa-check" style="color: #1A88FF; margin-right: 10px;"></i> Monthly bonus UGX 10,000</li>
+            </ul>
+            <div style="text-align: right;">
+                <button class="btn" id="btn-A3" onclick="upgrade('A3', 210000)">
+                    <i class="fas fa-arrow-up"></i> Join Now
+                </button>
+            </div>
+        </div>
+
+        <!-- Level A4 -->
+        <div class="tier-card" style="border-left: 6px solid #CC1177;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <div>
+                    <div class="tier-name" style="color: #CC1177;">A4</div>
+                    <p style="color: #5A5A7A;">Elite Level</p>
+                </div>
+                <div class="tier-price">UGX 690,000</div>
+            </div>
+            <div class="tier-earning">
+                <strong>UGX 1,437.5 per video • 20 videos per day</strong>
+                <p>Daily earning potential: UGX 28,750</p>
+            </div>
+            <ul>
+                <li><i class="fas fa-check" style="color: #CC1177; margin-right: 10px;"></i> UGX 1,437.5 per video</li>
+                <li><i class="fas fa-check" style="color: #CC1177; margin-right: 10px;"></i> 20 videos daily limit</li>
+                <li><i class="fas fa-check" style="color: #CC1177; margin-right: 10px;"></i> 24/7 dedicated manager</li>
+                <li><i class="fas fa-check" style="color: #CC1177; margin-right: 10px;"></i> 15% higher investment returns</li>
+                <li><i class="fas fa-check" style="color: #CC1177; margin-right: 10px;"></i> Exclusive investment opportunities</li>
+                <li><i class="fas fa-check" style="color: #CC1177; margin-right: 10px;"></i> Monthly bonus UGX 30,000</li>
+                <li><i class="fas fa-check" style="color: #CC1177; margin-right: 10px;"></i> Invitation to film premieres</li>
+            </ul>
+            <div style="text-align: right;">
+                <button class="btn" id="btn-A4" onclick="upgrade('A4', 690000)">
+                    <i class="fas fa-arrow-up"></i> Join Now
+                </button>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="card" style="margin-top: 40px;">
+            <h2 style="text-align: center; margin-bottom: 24px;">Frequently Asked Questions</h2>
+            <div style="margin: 20px 0;">
+                <h4>Q: How long does a level last?</h4>
+                <p style="color: #5A5A7A;">A: Each level subscription lasts for 2 years from the date of payment.</p>
+            </div>
+            <div style="margin: 20px 0;">
+                <h4>Q: Can I upgrade mid-month?</h4>
+                <p style="color: #5A5A7A;">A: Yes, you can upgrade anytime. The new level will be active immediately.</p>
+            </div>
+            <div style="margin: 20px 0;">
+                <h4>Q: Are there any hidden fees?</h4>
+                <p style="color: #5A5A7A;">A: No hidden fees. The price shown is the total amount to pay.</p>
+            </div>
+            <div style="margin: 20px 0;">
+                <h4>Q: How do I cancel my level?</h4>
+                <p style="color: #5A5A7A;">A: Levels are non-refundable and last for the full 2-year period.</p>
+            </div>
+            <div style="margin: 20px 0;">
+                <h4>Q: What is the Internship?</h4>
+                <p style="color: #5A5A7A;">A: The internship is a free 4-day trial where you can watch 5 videos per day and earn UGX 200 per video. Each account can only access the internship once.</p>
+            </div>
+            <div style="margin-top: 30px; text-align: center;">
+                <h3 style="margin-bottom: 16px;">Don't have cash? You can still join</h3>
+                <button class="btn btn-secondary" onclick="window.location.href='https://signal.me/#eu/X_g_n9iKhd9o2K9Uw-Ttir8S04RyW40GarqcuRt51ysF2I0qSmBPLJ-AI45zYXQb'">
+                    <i class="fas fa-arrow-right"></i> Check Eligibility
+                </button>
+            </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="disclaimer">
+            <h4><i class="fas fa-exclamation-circle"></i> Important Notice</h4>
+            <p><strong>No tasks or work are done on Sundays.</strong> The platform is closed every Sunday for maintenance and updates.</p>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="home.html" class="nav-item"><i class="fas fa-home"></i><span>Home</span></a>
+        <a href="invest.html" class="nav-item"><i class="fas fa-chart-line"></i><span>Invest</span></a>
+        <a href="task.html" class="nav-item"><i class="fas fa-tasks"></i><span>Task</span></a>
+        <a href="level.html" class="nav-item active"><i class="fas fa-trophy"></i><span>Level</span></a>
+        <a href="profile.html" class="nav-item"><i class="fas fa-user"></i><span>Profile</span></a>
+    </nav>
+
+    <script>
+        function upgrade(tier, price) {
+            localStorage.setItem('pendingPayment', JSON.stringify({ type: 'tier_upgrade', tier, price }));
+            window.location.href = 'payment.html';
+        }
+    </script>
+
+    <script type="module">
+        import { supabase } from './supabase.js';
+        import { getCurrentUser } from './auth.js';
+
+        const TIER_ORDER = ['free', 'A1', 'A2', 'A3', 'A4'];
+
+        async function loadUserTier() {
+            const { data: { user } } = await getCurrentUser();
+            if (!user) return;
+
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('tier, internship_active, internship_used, internship_start_date')
+                .eq('id', user.id)
+                .single();
+
+            if (!profile) return;
+
+            const userTier = profile.tier;
+            const userTierIndex = TIER_ORDER.indexOf(userTier);
+
+            document.getElementById('current-tier-display').textContent =
+                profile.internship_active ? 'Internship' :
+                userTier === 'free' ? 'Free' : userTier;
+
+            ['A1', 'A2', 'A3', 'A4'].forEach(tier => {
+                const step = document.getElementById('step-' + tier);
+                if (TIER_ORDER.indexOf(tier) <= userTierIndex) {
+                    step.classList.add('active');
+                }
+            });
+
+            ['A1', 'A2', 'A3', 'A4'].forEach(tier => {
+                const btn = document.getElementById('btn-' + tier);
+                const tierIndex = TIER_ORDER.indexOf(tier);
+                if (tierIndex <= userTierIndex) {
+                    btn.classList.add('btn-disabled');
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-check"></i> Current/Owned';
+                }
+            });
+
+            const internshipCard = document.getElementById('internship-card');
+            const internshipBtn = document.getElementById('btn-internship');
+            const countdownDiv = document.getElementById('internship-countdown');
+            const expiredDiv = document.getElementById('internship-expired');
+
+            if (userTier === 'free') {
+                internshipCard.style.display = 'block';
+
+                if (profile.internship_active) {
+                    const startDate = new Date(profile.internship_start_date);
+                    const expiryDate = new Date(startDate.getTime() + 4 * 24 * 60 * 60 * 1000);
+                    const now = new Date();
+                    const daysLeft = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+
+                    countdownDiv.style.display = 'block';
+                    document.getElementById('days-left').textContent = Math.max(daysLeft, 0);
+
+                    internshipBtn.classList.add('btn-disabled');
+                    internshipBtn.disabled = true;
+                    internshipBtn.innerHTML = '<i class="fas fa-clock"></i> Internship Active';
+
+                } else if (profile.internship_used) {
+                    expiredDiv.style.display = 'block';
+                    internshipBtn.classList.add('btn-disabled');
+                    internshipBtn.disabled = true;
+                    internshipBtn.innerHTML = '<i class="fas fa-lock"></i> Internship Ended';
+
+                } else {
+                    internshipBtn.addEventListener('click', async () => {
+                        internshipBtn.disabled = true;
+                        internshipBtn.textContent = 'Activating...';
+
+                        const { data, error } = await supabase
+                            .rpc('activate_internship', { user_id: user.id });
+
+                        if (error || data !== 'success') {
+                            alert('Error activating internship: ' + (error?.message || data));
+                            internshipBtn.disabled = false;
+                            internshipBtn.innerHTML = '<i class="fas fa-graduation-cap"></i> Join Internship';
+                            return;
+                        }
+
+                        alert('🎉 Welcome to your 4-day internship! You can now watch 5 videos per day and earn UGX 200 per video. Good luck!');
+                        window.location.reload();
+                    });
+                }
+            }
+        }
+
+        loadUserTier();
+    </script>
+</body>
+</html>

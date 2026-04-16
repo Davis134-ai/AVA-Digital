@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js');
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVA-Digital - Invest</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .investment-theme {
+            background: linear-gradient(135deg, #1B5E20 0%, #4CAF50 100%) !important;
+            color: white;
+            min-height: 100vh;
+        }
+        .investment-theme .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .investment-theme .btn {
+            background: linear-gradient(to right, #2E7D32, #4CAF50);
+        }
+        .investment-theme .btn-secondary {
+            background: linear-gradient(to right, #6B7280, #9CA3AF);
+        }
+        .region-slider {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 30px 0;
+        }
+        .region-btn {
+            padding: 12px 30px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .region-btn.active {
+            background: white;
+            color: #2E7D32;
+        }
+        .region-content {
+            display: none;
+        }
+        .region-content.active {
+            display: block;
+        }
+        .firm-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .firm-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .firm-logo {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: #2E7D32;
+        }
+        .package-info {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .earnings-display {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+        }
+        .minimum-note {
+            background: rgba(255, 193, 7, 0.2);
+            border-left: 4px solid #FFC107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .investment-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+            margin: 15px 0;
+        }
+        .investment-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .investment-input:focus {
+            outline: none;
+            border-color: white;
+        }
+        .input-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="investment-theme">
+    <div class="container">
+        <header class="header" style="background: rgba(255, 255, 255, 0.15);">
+            <h1><i class="fas fa-handshake"></i> Investment Partnership</h1>
+            <p>Powered by <strong>Helios Investment Partners</strong> & AVA-Digital</p>
+            <p style="margin-top: 10px; font-size: 0.95rem;">
+                Invest in Africa's growing economy through trusted asset managers
+            </p>
+        </header>
+
+        <div class="region-slider">
+            <button class="region-btn active" id="btn-african" onclick="switchRegion('african')">
+                <i class="fas fa-globe-africa"></i> African Firms
+            </button>
+            <button class="region-btn" id="btn-global" onclick="switchRegion('global')">
+                <i class="fas fa-globe-americas"></i> Global Firms
+            </button>
+        </div>
+
+        <div class="minimum-note">
+            <i class="fas fa-exclamation-circle"></i>
+            Minimum Investment: <strong>UGX 30,000</strong>
+        </div>
+
+        <!-- African Firms -->
+        <div id="african-firms" class="region-content active">
+            <h2 style="text-align: center; margin-bottom: 30px; color: white;">African Investment Partners</h2>
+
+            <div class="firm-card">
+                <div class="firm-header">
+                    <div class="firm-logo"><img src="old-mutual.png" style="width:100%; height:100%; border-radius:50%; object-fit:cover;"></div>
+                    <div>
+                        <h3 style="color: white; margin: 0;">Old Mutual</h3>
+                        <p style="opacity: 0.9;">Asset Management • 50+ years experience</p>
+                    </div>
+                </div>
+                <div class="package-info">
+                    <h4><i class="fas fa-gift"></i> Investment Package</h4>
+                    <p><strong>Duration:</strong> 15 days</p>
+                    <p><strong>Interest Rate:</strong> 30% on principal</p>
+                    <p><strong>Minimum:</strong> UGX 30,000</p>
+                </div>
+                <div>
+                    <label class="input-label">Investment Amount (UGX)</label>
+                    <input type="number" class="investment-input" placeholder="Enter amount (min: 30,000)" min="30000" step="1000">
+                </div>
+                <div class="earnings-display">
+                    <h4>Projected Returns</h4>
+                    <p style="font-size: 1.5rem; margin: 10px 0;"><strong>UGX 0</strong></p>
+                    <p>After 15 days</p>
+                </div>
+                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <button class="btn" onclick="calculateReturns(this, 30, 30000)">
+                        <i class="fas fa-calculator"></i> Calculate Returns
+                    </button>
+                    <button class="btn btn-secondary" onclick="investNow(this, 30000, 'african')">
+                        <i class="fas fa-arrow-right"></i> Invest Now
+                    </button>
+                </div>
+            </div>
+
+            <div class="firm-card">
+                <div class="firm-header">
+                    <div class="firm-logo"><img src="capital-alliance.png" style="width:100%; height:100%; border-radius:50%; object-fit:cover;"></div>
+                    <div>
+                        <h3 style="color: white; margin: 0;">Capital Alliance</h3>
+                        <p style="opacity: 0.9;">Investment Banking • Pan-African reach</p>
+                    </div>
+                </div>
+                <div class="package-info">
+                    <h4><i class="fas fa-gift"></i> Investment Package</h4>
+                    <p><strong>Duration:</strong> 30 days</p>
+                    <p><strong>Interest Rate:</strong> 25% on principal</p>
+                    <p><strong>Minimum:</strong> UGX 50,000</p>
+                </div>
+                <div>
+                    <label class="input-label">Investment Amount (UGX)</label>
+                    <input type="number" class="investment-input" placeholder="Enter amount (min: 50,000)" min="50000" step="1000">
+                </div>
+                <div class="earnings-display">
+                    <h4>Projected Returns</h4>
+                    <p style="font-size: 1.5rem; margin: 10px 0;"><strong>UGX 0</strong></p>
+                    <p>After 30 days</p>
+                </div>
+                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <button class="btn" onclick="calculateReturns(this, 25, 50000)">
+                        <i class="fas fa-calculator"></i> Calculate Returns
+                    </button>
+                    <button class="btn btn-secondary" onclick="investNow(this, 50000, 'african')">
+                        <i class="fas fa-arrow-right"></i> Invest Now
+                    </button>
+                </div>
+            </div>
+
+            <div class="firm-card">
+                <div class="firm-header">
+                    <div class="firm-logo"><img src="stanbic-investments.png" style="width:100%; height:100%; border-radius:50%; object-fit:cover;"></div>
+                    <div>
+                        <h3 style="color: white; margin: 0;">Stanbic Investments</h3>
+                        <p style="opacity: 0.9;">Wealth Management • East Africa</p>
+                    </div>
+                </div>
+                <div class="package-info">
+                    <h4><i class="fas fa-gift"></i> Investment Package</h4>
+                    <p><strong>Duration:</strong> 45 days</p>
+                    <p><strong>Interest Rate:</strong> 35% on principal</p>
+                    <p><strong>Minimum:</strong> UGX 75,000</p>
+                </div>
+                <div>
+                    <label class="input-label">Investment Amount (UGX)</label>
+                    <input type="number" class="investment-input" placeholder="Enter amount (min: 75,000)" min="75000" step="1000">
+                </div>
+                <div class="earnings-display">
+                    <h4>Projected Returns</h4>
+                    <p style="font-size: 1.5rem; margin: 10px 0;"><strong>UGX 0</strong></p>
+                    <p>After 45 days</p>
+                </div>
+                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <button class="btn" onclick="calculateReturns(this, 35, 75000)">
+                        <i class="fas fa-calculator"></i> Calculate Returns
+                    </button>
+                    <button class="btn btn-secondary" onclick="investNow(this, 75000, 'african')">
+                        <i class="fas fa-arrow-right"></i> Invest Now
+                    </button>
+                </div>
+            </div>
+
+            <div class="firm-card">
+                <div class="firm-header">
+                    <div class="firm-logo"><img src="african-alliance.png" style="width:100%; height:100%; border-radius:50%; object-fit:cover;"></div>
+                    <div>
+                        <h3 style="color: white; margin: 0;">African Alliance</h3>
+                        <p style="opacity: 0.9;">Private Equity • West Africa Focus</p>
+                    </div>
+                </div>
+                <div class="package-info">
+                    <h4><i class="fas fa-gift"></i> Investment Package</h4>
+                    <p><strong>Duration:</strong> 60 days</p>
+                    <p><strong>Interest Rate:</strong> 40% on principal</p>
+                    <p><strong>Minimum:</strong> UGX 100,000</p>
+                </div>
+                <div>
+                    <label class="input-label">Investment Amount (UGX)</label>
+                    <input type="number" class="investment-input" placeholder="Enter amount (min: 100,000)" min="100000" step="1000">
+                </div>
+                <div class="earnings-display">
+                    <h4>Projected Returns</h4>
+                    <p style="font-size: 1.5rem; margin: 10px 0;"><strong>UGX 0</strong></p>
+                    <p>After 60 days</p>
+                </div>
+                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <button class="btn" onclick="calculateReturns(this, 40, 100000)">
+                        <i class="fas fa-calculator"></i> Calculate Returns
+                    </button>
+                    <button class="btn btn-secondary" onclick="investNow(this, 100000, 'african')">
+                        <i class="fas fa-arrow-right"></i> Invest Now
+                    </button>
+                </div>
+            </div>
+
+            <div class="firm-card">
+                <div class="firm-header">
+                    <div class="firm-logo"><img src="centenary-capital.png" style="width:100%; height:100%; border-radius:50%; object-fit:cover;"></div>
+                    <div>
+                        <h3 style="color: white; margin: 0;">Centenary Capital</h3>
+                        <p style="opacity: 0.9;">Microfinance Investments • Uganda</p>
+                    </div>
+                </div>
+                <div class="package-info">
+                    <h4><i class="fas fa-gift"></i> Investment Package</h4>
+                    <p><strong>Duration:</strong> 20 days</p>
+                    <p><strong>Interest Rate:</strong> 22% on principal</p>
+                    <p><strong>Minimum:</strong> UGX 30,000</p>
+                </div>
+                <div>
+                    <label class="input-label">Investment Amount (UGX)</label>
+                    <input type="number" class="investment-input" placeholder="Enter amount (min: 30,000)" min="30000" step="1000">
+                </div>
+                <div class="earnings-display">
+                    <h4>Projected Returns</h4>
+                    <p style="font-size: 1.5rem; margin: 10px 0;"><strong>UGX 0</strong></p>
+                    <p>After 20 days</p>
+                </div>
+                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <button class="btn" onclick="calculateReturns(this, 22, 30000)">
+                        <i class="fas fa-calculator"></i> Calculate Returns
+                    </button>
+                    <button class="btn btn-secondary" onclick="investNow(this, 30000, 'african')">
+                        <i class="fas fa-arrow-right"></i> Invest Now
+                    </button>
+                </div>
+            </div>
+
+            <div class="firm-card">
+                <div class="firm-header">
+                    <div class="firm-logo"><img src="dfcu-investments.png" style="width:100%; height:100%; border-radius:50%; object-fit:cover;"></div>
+                    <div>
+                        <h3 style="color: white; margin: 0;">DFCU Investments</h3>
+                        <p style="opacity: 0.9;">Commercial Banking • East Africa</p>
+                    </div>
+                </div>
+                <div class="package-info">
+                    <h4><i class="fas fa-gift"></i> Investment Package</h4>
+                    <p><strong>Duration:</strong> 35 days</p>
+                    <p><strong>Interest Rate:</strong> 28% on principal</p>
+                    <p><strong>Minimum:</strong> UGX 40,000</p>
+                </div>
+                <div>
+                    <label class="input-label">Investment Amount (UGX)</label>
+                    <input type="number" class="investment-input" placeholder="Enter amount (min: 40,000)" min="40000" step="1000">
+                </div>
+                <div class="earnings-display">
+                    <h4>Projected Returns</h4>
+                    <p style="font-size: 1.5rem; margin: 10px 0;"><strong>UGX 0</strong></p>
+                    <p>After 35 days</p>
+                </div>
+                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <button class="btn" onclick="calculateReturns(this, 28, 40000)">
+                        <i class="fas fa-calculator"></i> Calculate Returns
+                    </button>
+                    <button class="btn btn-secondary" onclick="investNow(this, 40000, 'african')">
+                        <i class="fas fa-arrow-right"></i> Invest Now
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Global Firms -->
+        <div id="global-firms" class="region-content">
+            <h2 style="text-align: center; margin-bottom: 30px; color: white;">Global Investment Partners</h2>
+
+            <div class="firm-card">
+                <div class="firm-header">
+                    <div class="firm-logo"><img src="vanguard.png" style="width:100%; height:100%; border-radius:50%; object-fit:cover;"></div>
+                    <div>
+                        <h3 style="color: white; margin: 0;">Vanguard Group</h3>
+                        <p style="opacity: 0.9;">Index Funds • Global Leader</p>
+                    </div>
+                </div>
+                <div class="package-info">
+                    <h4><i class="fas fa-gift"></i> Investment Package</h4>
+                    <p><strong>Duration:</strong> 15 days</p>
+                    <p><strong>Interest Rate:</strong> 20% on principal</p>
+                    <p><strong>Minimum:</strong> UGX 100,000</p>
+                </div>
+                <div>
+                    <label class="input-label">Investment Amount (UGX)</label>
+                    <input type="number" class="investment-input" placeholder="Enter amount (min: 100,000)" min="100000" step="1000">
+                </div>
+                <div class="earnings-display">
+                    <h4>Projected Returns</h4>
+                    <p style="font-size: 1.5rem; margin: 10px 0;"><strong>UGX 0</strong></p>
+                    <p>After 15 days</p>
+                </div>
+                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <button class="btn" onclick="calculateReturns(this, 20, 100000)">
+                        <i class="fas fa-calculator"></i> Calculate Returns
+                    </button>
+                    <button class="btn btn-secondary" onclick="investNow(this, 100000, 'global')">
+                        <i class="fas fa-arrow-right"></i> Invest Now
+                    </button>
+                </div>
+            </div>
+
+            <div class="firm-card">
+                <div class="firm-header">
+                    <div class="firm-logo"><img src="blackrock.png" style="width:100%; height:100%; border-radius:50%; object-fit:cover;"></div>
+                    <div>
+                        <h3 style="color: white; margin: 0;">BlackRock</h3>
+                        <p style="opacity: 0.9;">Asset Management • World's Largest</p>
+                    </div>
+                </div>
+                <div class="package-info">
+                    <h4><i class="fas fa-gift"></i> Investment Package</h4>
+                    <p><strong>Duration:</strong> 23 days</p>
+                    <p><strong>Interest Rate:</strong> 35% on principal</p>
+                    <p><strong>Minimum:</strong> UGX 100,000</p>
+                </div>
+                <div>
+                    <label class="input-label">Investment Amount (UGX)</label>
+                    <input type="number" class="investment-input" placeholder="Enter amount (min: 100,000)" min="100000" step="1000">
+                </div>
+                <div class="earnings-display">
+                    <h4>Projected Returns</h4>
+                    <p style="font-size: 1.5rem; margin: 10px 0;"><strong>UGX 0</strong></p>
+                    <p>After 23 days</p>
+                </div>
+                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <button class="btn" onclick="calculateReturns(this, 35, 100000)">
+                        <i class="fas fa-calculator"></i> Calculate Returns
+                    </button>
+                    <button class="btn btn-secondary" onclick="investNow(this, 100000, 'global')">
+                        <i class="fas fa-arrow-right"></i> Invest Now
+                    </button>
+                </div>
+            </div>
+
+            <div class="firm-card">
+                <div class="firm-header">
+                    <div class="firm-logo"><img src="fidelity-investments.png" style="width:100%; height:100%; border-radius:50%; object-fit:cover;"></div>
+                    <div>
+                        <h3 style="color: white; margin: 0;">Fidelity Investments</h3>
+                        <p style="opacity: 0.9;">Mutual Funds • USA Based</p>
+                    </div>
+                </div>
+                <div class="package-info">
+                    <h4><i class="fas fa-gift"></i> Investment Package</h4>
+                    <p><strong>Duration:</strong> 35 days</p>
+                    <p><strong>Interest Rate:</strong> 65% on principal</p>
+                    <p><strong>Minimum:</strong> UGX 100,000</p>
+                </div>
+                <div>
+                    <label class="input-label">Investment Amount (UGX)</label>
+                    <input type="number" class="investment-input" placeholder="Enter amount (min: 100,000)" min="100000" step="1000">
+                </div>
+                <div class="earnings-display">
+                    <h4>Projected Returns</h4>
+                    <p style="font-size: 1.5rem; margin: 10px 0;"><strong>UGX 0</strong></p>
+                    <p>After 35 days</p>
+                </div>
+                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <button class="btn" onclick="calculateReturns(this, 65, 100000)">
+                        <i class="fas fa-calculator"></i> Calculate Returns
+                    </button>
+                    <button class="btn btn-secondary" onclick="investNow(this, 100000, 'global')">
+                        <i class="fas fa-arrow-right"></i> Invest Now
+                    </button>
+                </div>
+            </div>
+
+            <div class="firm-card">
+                <div class="firm-header">
+                    <div class="firm-logo"><img src="goldman-sachs.png" style="width:100%; height:100%; border-radius:50%; object-fit:cover;"></div>
+                    <div>
+                        <h3 style="color: white; margin: 0;">Goldman Sachs</h3>
+                        <p style="opacity: 0.9;">Investment Banking • Global Markets</p>
+                    </div>
+                </div>
+                <div class="package-info">
+                    <h4><i class="fas fa-gift"></i> Investment Package</h4>
+                    <p><strong>Duration:</strong> 49 days</p>
+                    <p><strong>Interest Rate:</strong> 72% on principal</p>
+                    <p><strong>Minimum:</strong> UGX 100,000</p>
+                </div>
+                <div>
+                    <label class="input-label">Investment Amount (UGX)</label>
+                    <input type="number" class="investment-input" placeholder="Enter amount (min: 100,000)" min="100000" step="1000">
+                </div>
+                <div class="earnings-display">
+                    <h4>Projected Returns</h4>
+                    <p style="font-size: 1.5rem; margin: 10px 0;"><strong>UGX 0</strong></p>
+                    <p>After 49 days</p>
+                </div>
+                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <button class="btn" onclick="calculateReturns(this, 72, 100000)">
+                        <i class="fas fa-calculator"></i> Calculate Returns
+                    </button>
+                    <button class="btn btn-secondary" onclick="investNow(this, 100000, 'global')">
+                        <i class="fas fa-arrow-right"></i> Invest Now
+                    </button>
+                </div>
+            </div>
+
+            <div class="firm-card">
+                <div class="firm-header">
+                    <div class="firm-logo"><img src="morgan-stanley.png" style="width:100%; height:100%; border-radius:50%; object-fit:cover;"></div>
+                    <div>
+                        <h3 style="color: white; margin: 0;">Morgan Stanley</h3>
+                        <p style="opacity: 0.9;">Wealth Management • Global</p>
+                    </div>
+                </div>
+                <div class="package-info">
+                    <h4><i class="fas fa-gift"></i> Investment Package</h4>
+                    <p><strong>Duration:</strong> 115 days</p>
+                    <p><strong>Interest Rate:</strong> 120% on principal</p>
+                    <p><strong>Minimum:</strong> UGX 100,000</p>
+                </div>
+                <div>
+                    <label class="input-label">Investment Amount (UGX)</label>
+                    <input type="number" class="investment-input" placeholder="Enter amount (min: 100,000)" min="100000" step="1000">
+                </div>
+                <div class="earnings-display">
+                    <h4>Projected Returns</h4>
+                    <p style="font-size: 1.5rem; margin: 10px 0;"><strong>UGX 0</strong></p>
+                    <p>After 115 days</p>
+                </div>
+                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <button class="btn" onclick="calculateReturns(this, 120, 100000)">
+                        <i class="fas fa-calculator"></i> Calculate Returns
+                    </button>
+                    <button class="btn btn-secondary" onclick="investNow(this, 100000, 'global')">
+                        <i class="fas fa-arrow-right"></i> Invest Now
+                    </button>
+                </div>
+            </div>
+
+            <div class="firm-card">
+                <div class="firm-header">
+                    <div class="firm-logo"><img src="jp-morgan.png" style="width:100%; height:100%; border-radius:50%; object-fit:cover;"></div>
+                    <div>
+                        <h3 style="color: white; margin: 0;">J.P. Morgan Asset Management</h3>
+                        <p style="opacity: 0.9;">Global Asset Manager • Since 1871</p>
+                    </div>
+                </div>
+                <div class="package-info">
+                    <h4><i class="fas fa-gift"></i> Investment Package</h4>
+                    <p><strong>Duration:</strong> 195 days</p>
+                    <p><strong>Interest Rate:</strong> 155% on principal</p>
+                    <p><strong>Minimum:</strong> UGX 100,000</p>
+                </div>
+                <div>
+                    <label class="input-label">Investment Amount (UGX)</label>
+                    <input type="number" class="investment-input" placeholder="Enter amount (min: 100,000)" min="100000" step="1000">
+                </div>
+                <div class="earnings-display">
+                    <h4>Projected Returns</h4>
+                    <p style="font-size: 1.5rem; margin: 10px 0;"><strong>UGX 0</strong></p>
+                    <p>After 195 days</p>
+                </div>
+                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <button class="btn" onclick="calculateReturns(this, 155, 100000)">
+                        <i class="fas fa-calculator"></i> Calculate Returns
+                    </button>
+                    <button class="btn btn-secondary" onclick="investNow(this, 100000, 'global')">
+                        <i class="fas fa-arrow-right"></i> Invest Now
+                    </button>
+                </div>
+            </div>
+
+            <div class="firm-card">
+                <div class="firm-header">
+                    <div class="firm-logo"><img src="worldliberty-financial.png" style="width:100%; height:100%; border-radius:50%; object-fit:cover;"></div>
+                    <div>
+                        <h3 style="color: white; margin: 0;">World Liberty Financial</h3>
+                        <p style="opacity: 0.9;">Global Finance • Emerging Markets</p>
+                    </div>
+                </div>
+                <div class="package-info">
+                    <h4><i class="fas fa-gift"></i> Investment Package</h4>
+                    <p><strong>Duration:</strong> 289 days</p>
+                    <p><strong>Interest Rate:</strong> 210% on principal</p>
+                    <p><strong>Minimum:</strong> UGX 100,000</p>
+                </div>
+                <div>
+                    <label class="input-label">Investment Amount (UGX)</label>
+                    <input type="number" class="investment-input" placeholder="Enter amount (min: 100,000)" min="100000" step="1000">
+                </div>
+                <div class="earnings-display">
+                    <h4>Projected Returns</h4>
+                    <p style="font-size: 1.5rem; margin: 10px 0;"><strong>UGX 0</strong></p>
+                    <p>After 289 days</p>
+                </div>
+                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <button class="btn" onclick="calculateReturns(this, 210, 100000)">
+                        <i class="fas fa-calculator"></i> Calculate Returns
+                    </button>
+                    <button class="btn btn-secondary" onclick="investNow(this, 100000, 'global')">
+                        <i class="fas fa-arrow-right"></i> Invest Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="home.html" class="nav-item">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="invest.html" class="nav-item active">
+            <i class="fas fa-chart-line"></i>
+            <span>Invest</span>
+        </a>
+        <a href="task.html" class="nav-item">
+            <i class="fas fa-tasks"></i>
+            <span>Task</span>
+        </a>
+        <a href="level.html" class="nav-item">
+            <i class="fas fa-trophy"></i>
+            <span>Level</span>
+        </a>
+        <a href="profile.html" class="nav-item">
+            <i class="fas fa-user"></i>
+            <span>Profile</span>
+        </a>
+    </nav>
+
+    <script>
+        function switchRegion(region) {
+            document.querySelectorAll('.region-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-' + region).classList.add('active');
+            document.getElementById('african-firms').classList.remove('active');
+            document.getElementById('global-firms').classList.remove('active');
+            document.getElementById(region + '-firms').classList.add('active');
+        }
+
+        function calculateReturns(button, interestRate, minAmount) {
+            const firmCard = button.closest('.firm-card');
+            const input = firmCard.querySelector('.investment-input');
+            const amount = parseInt(input.value);
+            const earningsDisplay = firmCard.querySelector('.earnings-display');
+            const earningsAmount = earningsDisplay.querySelector('strong');
+
+            if (!amount || amount < minAmount) {
+                alert('Please enter a valid amount (minimum UGX ' + minAmount.toLocaleString() + ')');
+                input.focus();
+                return;
+            }
+
+            const earnings = amount + (amount * interestRate / 100);
+            earningsAmount.textContent = 'UGX ' + earnings.toLocaleString();
+            earningsDisplay.style.display = 'block';
+        }
+    </script>
+
+    <script type="module">
+        import { supabase } from './supabase.js';
+        import { getCurrentUser } from './auth.js';
+
+        let userTier = 'free';
+
+        async function loadUserTier() {
+            const { data: { user } } = await getCurrentUser();
+            if (!user) return;
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('tier')
+                .eq('id', user.id)
+                .single();
+            if (profile) userTier = profile.tier;
+        }
+
+        loadUserTier();
+
+        window.investNow = async function(button, minAmount, region) {
+            if (region === 'global' && userTier !== 'A3' && userTier !== 'A4') {
+                alert('Please upgrade to tier A3 or A4 to access these investment opportunities');
+                return;
+            }
+
+            const firmCard = button.closest('.firm-card');
+            const input = firmCard.querySelector('.investment-input');
+            const amount = parseInt(input.value);
+
+            if (!amount) {
+                alert('Please input an amount to proceed');
+                return;
+            }
+
+            if (amount < minAmount) {
+                alert('Please input an amount to proceed');
+                return;
+            }
+
+            const { data: { user } } = await getCurrentUser();
+            if (!user) {
+                alert('Please log in to continue');
+                return;
+            }
+
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('balance, phone')
+                .eq('id', user.id)
+                .single();
+
+            if (!profile || profile.balance < amount) {
+                alert('Insufficient balance please recharge more funds to continue');
+                return;
+            }
+
+            const newBalance = profile.balance - amount;
+            const { error: updateError } = await supabase
+                .from('profiles')
+                .update({ balance: newBalance })
+                .eq('id', user.id);
+
+            if (updateError) {
+                alert('Error processing investment. Please try again.');
+                return;
+            }
+
+            await supabase
+                .from('payment_requests')
+                .insert({
+                    user_id: user.id,
+                    type: 'investment',
+                    amount: amount,
+                    phone: profile.phone,
+                    status: 'approved'
+                });
+
+            const firmName = firmCard.querySelector('h3').textContent;
+
+            await fetch('https://discord.com/api/webhooks/1476253399233069128/kF1iUFvOOfp8GiSAFUh_IRDlGkmXwx_pSgmIRcusm1z4hRznkj7XQNO6t3ERtOPc0acr', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    content: `📈 New Investment!\nPhone: ${profile.phone}\nFirm: ${firmName}\nAmount: UGX ${amount.toLocaleString()}\nNew Balance: UGX ${newBalance.toLocaleString()}\nRegion: ${region === 'global' ? 'Global' : 'African'}`
+                })
+            });
+
+            localStorage.setItem('pendingPayment', JSON.stringify({
+                type: 'investment',
+                amount: amount,
+                firm: firmName
+            }));
+
+            window.location.href = 'payment.html';
+        }
+    </script>
+</body>
+</html>

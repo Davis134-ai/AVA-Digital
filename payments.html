@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js');
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVA-Digital - Payments</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ----- LIGHT THEME · AVA‑DIGITAL COLOR SYSTEM ----- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: rgb(255, 255, 255);
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            color: #1A1A2E;
+            line-height: 1.5;
+            padding-bottom: 80px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px 24px;
+        }
+
+        /* Header with gradient */
+        .payments-header {
+            background: linear-gradient(135deg, #FF2D2D, #FF7A00, #CC1177, #7B22CC, #1133DD);
+            color: white;
+            padding: 32px 24px;
+            border-radius: 32px;
+            margin-bottom: 28px;
+            text-align: center;
+            box-shadow: 0 20px 35px -8px rgba(123, 34, 204, 0.25);
+        }
+
+        .payments-header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+
+        .payments-header p {
+            opacity: 0.95;
+            font-weight: 500;
+        }
+
+        /* Wallet card (light variant) */
+        .wallet-card {
+            background: #FFFFFF;
+            border-radius: 28px;
+            padding: 28px 24px;
+            margin-bottom: 28px;
+            color: #1A1A2E;
+            box-shadow: 0 15px 30px -10px rgba(0,0,0,0.05), 0 0 0 1px rgba(123, 34, 204, 0.06);
+            border-left: 6px solid #7B22CC;
+        }
+
+        .wallet-card h3 {
+            color: #7B22CC;
+            margin-bottom: 8px;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .wallet-card p {
+            font-size: 0.9rem;
+            color: #5A5A7A;
+            margin-bottom: 20px;
+        }
+
+        .wallet-input-group {
+            margin-bottom: 18px;
+        }
+
+        .wallet-input-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #1E1E3A;
+            margin-bottom: 6px;
+        }
+
+        .wallet-input-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #E2E2F0;
+            border-radius: 18px;
+            font-size: 1rem;
+            outline: none;
+            background: #F9F9FF;
+            color: #1A1A2E;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
+        }
+
+        .wallet-input-group input:focus {
+            border-color: #7B22CC;
+            box-shadow: 0 0 0 4px rgba(123, 34, 204, 0.08);
+        }
+
+        .wallet-input-group input:disabled {
+            background: #F0EEF8;
+            color: #5A5A7A;
+            opacity: 0.8;
+            cursor: not-allowed;
+        }
+
+        .wallet-input-group input::placeholder {
+            color: #9A9AB0;
+        }
+
+        .wallet-saved-badge {
+            display: none;
+            background: rgba(0, 187, 170, 0.08);
+            border: 1px solid #00BBAA;
+            border-radius: 16px;
+            padding: 12px 16px;
+            color: #00BBAA;
+            font-size: 0.9rem;
+            margin-top: 16px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .save-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #7B22CC, #CC1177);
+            color: white;
+            border: none;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 12px 18px -8px rgba(123, 34, 204, 0.3);
+            transition: transform 0.15s, box-shadow 0.2s;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .save-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .save-btn:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 18px 25px -10px rgba(204, 17, 119, 0.4);
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1E1E3A;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title i {
+            color: #7B22CC;
+        }
+
+        .payment-card {
+            background: #FFFFFF;
+            border-radius: 20px;
+            padding: 18px 20px;
+            margin-bottom: 12px;
+            box-shadow: 0 8px 18px -6px rgba(0,0,0,0.04), 0 0 0 1px #F0EEF8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .payment-card-left .payment-type {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #1E1E3A;
+            margin-bottom: 4px;
+        }
+
+        .payment-card-left .payment-date {
+            font-size: 0.8rem;
+            color: #5A5A7A;
+        }
+
+        .payment-card-right {
+            text-align: right;
+        }
+
+        .payment-amount {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 6px;
+        }
+
+        .payment-amount.recharge { color: #00BBAA; }
+        .payment-amount.withdrawal { color: #FF2D2D; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .status-approved { background: rgba(0, 187, 170, 0.1); color: #00BBAA; }
+        .status-pending { background: rgba(255, 122, 0, 0.1); color: #FF7A00; }
+        .status-failed { background: rgba(255, 45, 45, 0.1); color: #FF2D2D; }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #5A5A7A;
+            background: #FAFAFF;
+            border-radius: 28px;
+        }
+
+        .empty-state i {
+            font-size: 3.5rem;
+            color: #D0D0E0;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 40px;
+            color: #5A5A7A;
+        }
+
+        /* Bottom navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(12px);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 8px 16px 14px;
+            border-top: 1px solid rgba(123,34,204,0.08);
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.02);
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #6A6A8A;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 40px;
+            transition: all 0.2s;
+        }
+
+        .nav-item i { font-size: 1.5rem; margin-bottom: 4px; }
+        .nav-item.active { color: #CC1177; background: rgba(204,17,119,0.04); }
+        .nav-item:hover { color: #7B22CC; }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- Header -->
+        <div class="payments-header">
+            <h1><i class="fas fa-receipt"></i> Payment History</h1>
+            <p>Track all your transactions</p>
+        </div>
+
+        <!-- Connect Wallet -->
+        <div class="wallet-card">
+            <h3><i class="fas fa-wallet"></i> Wallet Information</h3>
+            <p>This information will be used to process your payments. It can only be set once.</p>
+
+            <div class="wallet-input-group">
+                <label>Mobile Money Number</label>
+                <input type="tel" id="wallet-phone" disabled placeholder="Loading...">
+            </div>
+
+            <div class="wallet-input-group">
+                <label>Registered Names</label>
+                <input type="text" id="wallet-names" placeholder="Enter names your number is registered under" maxlength="100">
+            </div>
+
+            <div class="wallet-saved-badge" id="wallet-saved-badge">
+                <i class="fas fa-check-circle"></i> Wallet information saved. Contact support to make changes.
+            </div>
+
+            <button class="save-btn" id="save-wallet-btn">
+                <i class="fas fa-save"></i> Save Wallet Information
+            </button>
+        </div>
+
+        <!-- Payment History -->
+        <div class="section-title">
+            <i class="fas fa-history"></i>
+            All Transactions
+        </div>
+
+        <div id="payments-container">
+            <div class="loading-state">
+                <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #7B22CC;"></i>
+                <p style="margin-top: 15px;">Loading transactions...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="home.html" class="nav-item"><i class="fas fa-home"></i><span>Home</span></a>
+        <a href="invest.html" class="nav-item"><i class="fas fa-chart-line"></i><span>Invest</span></a>
+        <a href="task.html" class="nav-item"><i class="fas fa-tasks"></i><span>Task</span></a>
+        <a href="level.html" class="nav-item"><i class="fas fa-trophy"></i><span>Level</span></a>
+        <a href="profile.html" class="nav-item"><i class="fas fa-user"></i><span>Profile</span></a>
+    </nav>
+
+    <script type="module">
+        import { supabase } from './supabase.js';
+        import { getCurrentUser } from './auth.js';
+
+        let userId = null;
+
+        async function loadPage() {
+            const { data: { user } } = await getCurrentUser();
+            if (!user) { window.location.href = 'index.html'; return; }
+            userId = user.id;
+
+            // Load profile
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('phone, wallet_names')
+                .eq('id', user.id)
+                .single();
+
+            if (profile) {
+                // Pre-fill phone (always disabled)
+                document.getElementById('wallet-phone').value = profile.phone;
+
+                if (profile.wallet_names) {
+                    // Already saved — lock everything
+                    document.getElementById('wallet-names').value = profile.wallet_names;
+                    document.getElementById('wallet-names').disabled = true;
+                    document.getElementById('save-wallet-btn').disabled = true;
+                    document.getElementById('save-wallet-btn').style.display = 'none';
+                    document.getElementById('wallet-saved-badge').style.display = 'block';
+                }
+            }
+
+            // Save wallet button
+            document.getElementById('save-wallet-btn').addEventListener('click', async () => {
+                const names = document.getElementById('wallet-names').value.trim();
+
+                if (!names || names.length < 5) {
+                    alert('Please enter your registered names (minimum 5 characters).');
+                    return;
+                }
+
+                // Only allow letters and spaces
+                if (!/^[a-zA-Z\s]+$/.test(names)) {
+                    alert('Names can only contain letters. No numbers or special characters allowed.');
+                    return;
+                }
+
+                const btn = document.getElementById('save-wallet-btn');
+                btn.disabled = true;
+                btn.textContent = 'Saving...';
+
+                const { error } = await supabase
+                    .from('profiles')
+                    .update({ wallet_names: names })
+                    .eq('id', user.id);
+
+                if (error) {
+                    alert('Error saving wallet information: ' + error.message);
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-save"></i> Save Wallet Information';
+                    return;
+                }
+
+                // Lock fields after saving
+                document.getElementById('wallet-names').disabled = true;
+                btn.style.display = 'none';
+                document.getElementById('wallet-saved-badge').style.display = 'block';
+                alert('Wallet information saved successfully!');
+            });
+
+            // Load payment history
+            loadPayments(user.id);
+        }
+
+        async function loadPayments(userId) {
+            const { data: payments, error } = await supabase
+                .from('payment_requests')
+                .select('id, type, amount, status, created_at')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false });
+
+            const container = document.getElementById('payments-container');
+
+            if (error || !payments || payments.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-receipt"></i>
+                        <p>No transactions yet.</p>
+                        <p style="font-size: 0.85rem;">Your recharges and withdrawals will appear here.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+
+            payments.forEach(payment => {
+                const date = new Date(payment.created_at);
+                const formattedDate = date.toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                }) + ' • ' + date.toLocaleTimeString('en-GB', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                const isRecharge = payment.type === 'recharge';
+                const isUpgrade = payment.type === 'tier_upgrade';
+
+                const typeLabel = isRecharge ? '🔋 Recharge'
+                    : isUpgrade ? '⬆️ Tier Upgrade'
+                    : '💸 Withdrawal';
+
+                const amountClass = isRecharge || isUpgrade ? 'recharge' : 'withdrawal';
+                const amountPrefix = isRecharge || isUpgrade ? '+' : '-';
+
+                const statusClass = payment.status === 'approved' ? 'status-approved'
+                    : payment.status === 'failed' ? 'status-failed'
+                    : 'status-pending';
+
+                const statusLabel = payment.status === 'approved' ? '✓ Approved'
+                    : payment.status === 'failed' ? '✗ Failed'
+                    : '⏳ Pending';
+
+                const card = document.createElement('div');
+                card.className = 'payment-card';
+                card.innerHTML = `
+                    <div class="payment-card-left">
+                        <div class="payment-type">${typeLabel}</div>
+                        <div class="payment-date">${formattedDate}</div>
+                    </div>
+                    <div class="payment-card-right">
+                        <div class="payment-amount ${amountClass}">
+                            ${amountPrefix} UGX ${(payment.amount || 0).toLocaleString()}
+                        </div>
+                        <span class="status-badge ${statusClass}">${statusLabel}</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        loadPage();
+    </script>
+</body>
+</html>

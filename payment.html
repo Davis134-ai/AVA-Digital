@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js');
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVA-Digital - Payment</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ----- LIGHT THEME · AVA‑DIGITAL COLOR SYSTEM ----- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: rgb(255, 255, 255);
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 24px;
+            color: #1A1A2E;
+        }
+
+        .container {
+            max-width: 480px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #FF7A00, #CC1177, #7B22CC);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .header h1 i {
+            background: linear-gradient(135deg, #FF7A00, #CC1177, #7B22CC);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-right: 8px;
+        }
+
+        .card {
+            background: #FFFFFF;
+            padding: 36px 30px;
+            border-radius: 28px;
+            box-shadow: 0 20px 35px -8px rgba(0,0,0,0.08), 
+                        0 8px 18px -6px rgba(0,0,0,0.05),
+                        0 0 0 1px rgba(123, 34, 204, 0.08) inset;
+            text-align: center;
+        }
+
+        .card p {
+            color: #2E2E4A;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        #paymentAmount {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #7B22CC;
+            display: block;
+            margin: 10px 0;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #7B22CC, #CC1177);
+            border: none;
+            color: white;
+            font-weight: 700;
+            font-size: 1.15rem;
+            padding: 16px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.15s, box-shadow 0.25s;
+            box-shadow: 0 12px 20px -8px rgba(123, 34, 204, 0.35), 0 4px 8px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255,255,255,0.2);
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 28px -10px rgba(204, 17, 119, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 8px 15px -5px rgba(123,34,204,0.3);
+        }
+
+        .back-button {
+            display: inline-block;
+            margin-top: 24px;
+            color: #1A88FF;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: color 0.2s;
+        }
+
+        .back-button i {
+            margin-right: 6px;
+        }
+
+        .back-button:hover {
+            color: #7B22CC;
+            text-decoration: underline;
+        }
+
+        /* Divider */
+        .divider {
+            margin: 24px 0 16px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #7B22CC, #CC1177, transparent);
+            opacity: 0.3;
+        }
+
+        .secure-note {
+            margin-top: 20px;
+            color: #5A5A7A;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-credit-card"></i> Complete Payment</h1>
+        </div>
+        <div class="card">
+            <p>Amount to pay:</p>
+            <strong id="paymentAmount">UGX 0</strong>
+            
+            <div class="divider"></div>
+            
+            <p style="font-size: 0.95rem; color: #5A5A7A;">Click below once you have completed the payment.</p>
+            
+            <button id="confirmPayment" class="btn">
+                <i class="fas fa-check-circle"></i> I have completed payment
+            </button>
+            
+            <a href="home.html" class="back-button">
+                <i class="fas fa-arrow-left"></i> Back to Home
+            </a>
+        </div>
+        <div class="secure-note" style="text-align: center;">
+            <i class="fas fa-lock"></i> Secure · Fast · Reliable
+        </div>
+    </div>
+
+    <script type="module">
+        import { supabase } from './supabase.js';
+        import { getCurrentUser } from './auth.js';
+
+        const TIER_COSTS = {
+            'A1': 30000,
+            'A2': 90000,
+            'A3': 210000,
+            'A4': 690000
+        };
+
+        const pending = JSON.parse(localStorage.getItem('pendingPayment'));
+        if (!pending) {
+            alert('No pending payment found.');
+            window.location.href = 'home.html';
+        }
+
+        document.getElementById('paymentAmount').textContent = 'UGX ' + (pending.price || pending.amount).toLocaleString();
+
+        document.getElementById('confirmPayment').addEventListener('click', async () => {
+            try {
+                const { data: { user }, error: userError } = await getCurrentUser();
+                if (userError || !user) throw new Error('Not logged in');
+
+                // Get user's profile
+                const { data: profile, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('phone, balance, tier')
+                    .eq('id', user.id)
+                    .single();
+                if (profileError) throw profileError;
+
+                // Handle tier upgrade with auto-deduction
+                if (pending.type === 'tier_upgrade') {
+                    const tierCost = TIER_COSTS[pending.tier];
+
+                    // Check if balance is sufficient
+                    if (profile.balance < tierCost) {
+                        alert('Error, Insufficient funds');
+                        return;
+                    }
+
+                    const newBalance = profile.balance - tierCost;
+
+                    // Deduct balance and upgrade tier
+                    const { error: updateError } = await supabase
+                        .from('profiles')
+                        .update({ 
+                            balance: newBalance,
+                            tier: pending.tier,
+                            daily_limit: pending.tier === 'A1' ? 5 
+                                       : pending.tier === 'A2' ? 10 
+                                       : pending.tier === 'A3' ? 14 
+                                       : pending.tier === 'A4' ? 20 : 0
+                        })
+                        .eq('id', user.id);
+                    if (updateError) throw updateError;
+
+                    // Insert payment request record
+                    const { error: insertError } = await supabase
+                        .from('payment_requests')
+                        .insert({
+                            user_id: user.id,
+                            type: pending.type,
+                            amount: tierCost,
+                            tier: pending.tier,
+                            phone: profile.phone,
+                            status: 'approved'
+                        });
+                    if (insertError) throw insertError;
+
+                    // Notify Discord
+                    await fetch('https://discord.com/api/webhooks/1475457938297589782/fR9WGn0D8_Lt6GHxDFWDVIb8RKOLBhJWdgbiGXcfCh_V3NtPddtZix101msEpH8ldOcR', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            content: `✅ Auto-Approved Tier Upgrade!\nPhone: ${profile.phone}\nTier: ${pending.tier}\nAmount Deducted: UGX ${tierCost.toLocaleString()}\nNew Balance: UGX ${newBalance.toLocaleString()}`
+                        })
+                    });
+
+                    alert(`Success! You have been upgraded to ${pending.tier} tier.`);
+
+                } else {
+                    // For non-tier-upgrade payments, just insert request and notify Discord
+                    const { error: insertError } = await supabase
+                        .from('payment_requests')
+                        .insert({
+                            user_id: user.id,
+                            type: pending.type,
+                            amount: pending.price || pending.amount,
+                            tier: pending.tier || null,
+                            phone: profile.phone,
+                            status: 'pending'
+                        });
+                    if (insertError) throw insertError;
+
+                    await fetch('https://discord.com/api/webhooks/1475457938297589782/fR9WGn0D8_Lt6GHxDFWDVIb8RKOLBhJWdgbiGXcfCh_V3NtPddtZix101msEpH8ldOcR', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            content: `💰 New Payment Request!\nPhone: ${profile.phone}\nAmount: UGX ${(pending.price || pending.amount).toLocaleString()}\nType: ${pending.type}${pending.tier ? '\nTier: ' + pending.tier : ''}`
+                        })
+                    });
+
+                    alert('Thank you for your payment. It will be confirmed shortly.');
+                }
+
+                localStorage.removeItem('pendingPayment');
+                window.location.href = 'home.html';
+
+            } catch (err) {
+                console.error(err);
+                alert('Error: ' + err.message);
+            }
+        });
+    </script>
+</body>
+</html>

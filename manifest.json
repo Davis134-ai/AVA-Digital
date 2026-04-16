@@ -1,0 +1,52 @@
+{
+    "name": "AVA",
+    "short_name": "AVA",
+    "description": "Watch African film trailers and earn real money daily",
+    "id": "AVA-app",
+    "start_url": "/home.html",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#7B22CC",
+    "orientation": "portrait-primary",
+    "lang": "en",
+    "scope": "/",
+    "categories": ["entertainment", "finance"],
+    "icons": [
+        {
+            "src": "/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Watch & Earn",
+            "url": "/task.html",
+            "description": "Go to Task Hall"
+        },
+        {
+            "name": "Recharge",
+            "url": "/recharge.html",
+            "description": "Recharge your wallet"
+        }
+    ]
+}

