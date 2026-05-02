@@ -540,13 +540,16 @@
                 document.getElementById('total-balance').textContent = fmt(profile.balance);
                 document.getElementById('total-income').textContent = fmt(profile.total_earned);
                 
-                // Show referral code with AVA prefix (frontend-only transformation)
+                // ----- FIX 1: Store actual DB code and show display code -----
                 let refCode = profile.referral_code || 'AVA-XXXXXX';
+                let displayCode = refCode;
                 if (refCode.startsWith('AFRITRAILER-')) {
-                    refCode = 'AVA-' + refCode.substring(12);
+                    displayCode = 'AVA-' + refCode.substring(12);
                 }
-                document.getElementById('user-referral-code').textContent = refCode;
-                               
+                document.getElementById('user-referral-code').textContent = displayCode;
+                // Store actual database code for link copying
+                document.getElementById('user-referral-code').dataset.actualCode = refCode;
+                
                 document.getElementById('current-month').textContent = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
             }
 
@@ -601,14 +604,17 @@
             }
         }
 
+        // ----- FIX 2: Use the actual database code, not the display code -----
         function copyReferralCode() {
             const tier = document.getElementById('user-tier-bottom').textContent.trim();
             if (!['A1', 'A2', 'A3', 'A4'].includes(tier)) {
                 alert('You need to be on tier A1 or above to share referral links. Upgrade your tier to unlock this feature.');
                 return;
             }
-            const referralCode = document.getElementById('user-referral-code').textContent;
-            const link = window.location.origin + '/register.html?ref=' + referralCode;
+            // Use actual database code not display code
+            const actualCode = document.getElementById('user-referral-code').dataset.actualCode
+                            || document.getElementById('user-referral-code').textContent;
+            const link = window.location.origin + '/register.html?ref=' + actualCode;
             navigator.clipboard.writeText(link).then(() => {
                 alert('Referral link copied to clipboard!');
             });

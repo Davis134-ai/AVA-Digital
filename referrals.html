@@ -344,10 +344,10 @@
             const { data: { user } } = await getCurrentUser();
             if (!user) { window.location.href = 'index.html'; return; }
 
-            // Get current user's profile for referral code
+            // Get current user's profile for referral code and tier
             const { data: myProfile } = await supabase
                 .from('profiles')
-                .select('referral_code, phone')
+                .select('referral_code, phone, tier')
                 .eq('id', user.id)
                 .single();
 
@@ -356,8 +356,14 @@
             // Show referral code
             document.getElementById('referral-code').textContent = myProfile.referral_code;
 
-            // Copy link button
+            // Copy link button with tier restriction (same logic as profile page)
             document.getElementById('copy-link-btn').addEventListener('click', () => {
+                const allowedTiers = ['A1', 'A2', 'A3', 'A4'];
+                if (!allowedTiers.includes(myProfile.tier)) {
+                    alert('You need to be on tier A1 or above to share referral links. Upgrade your tier to unlock this feature.');
+                    return;
+                }
+
                 const link = window.location.origin + '/register.html?ref=' + myProfile.referral_code;
                 navigator.clipboard.writeText(link);
                 const btn = document.getElementById('copy-link-btn');

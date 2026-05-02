@@ -13,14 +13,27 @@ export async function register(phone, password, referralCode = null) {
   const user = authData.user;
   if (!user) throw new Error('Registration failed')
 
-  // Look up referrer first if code provided
+  // ----- FIX: Look up referrer with fallback for old AFRITRAILER- codes -----
   let referrerId = null;
   if (referralCode) {
-    const { data: referrer } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('referral_code', referralCode)
-      .single();
+    // Try the code as provided first
+    let { data: referrer } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('referral_code', referralCode)
+        .single();
+
+    // If not found and code starts with AVA-, try the old AFRITRAILER- prefix
+    if (!referrer && referralCode.startsWith('AVA-')) {
+        const oldCode = 'AFRITRAILER-' + referralCode.substring(4);
+        const { data: referrer2 } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('referral_code', oldCode)
+            .single();
+        referrer = referrer2;
+    }
+
     if (referrer) referrerId = referrer.id;
   }
 

