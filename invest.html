@@ -771,8 +771,9 @@
         await loadProgressBars();
 
         window.investNow = async function(button, minAmount, region) {
-            if (region === 'global' && userTier !== 'A3' && userTier !== 'A4') {
-                alert('Please upgrade to tier A3 or A4 to access these investment opportunities');
+            // Updated tier check: allow A2, A3, A4 for global firms
+            if (region === 'global' && userTier !== 'A2' && userTier !== 'A3' && userTier !== 'A4') {
+                alert('Please upgrade to tier A2 or above to access these investment opportunities');
                 return;
             }
 
