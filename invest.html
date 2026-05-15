@@ -122,13 +122,79 @@
             margin-bottom: 8px;
             font-weight: 600;
         }
+
+        /* Progress bar styles */
+        .progress-wrapper {
+            margin-top: 18px;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.85);
+            font-weight: 600;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 10px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 50px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 50px;
+            background: linear-gradient(90deg, #00E676, #69F0AE);
+            box-shadow: 0 0 10px rgba(0,230,118,0.6), 0 0 20px rgba(0,230,118,0.3);
+            transition: width 1s ease;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .progress-meta .pct {
+            color: #69F0AE;
+            font-weight: 700;
+        }
+
+        .progress-meta .days {
+            color: rgba(255,255,255,0.7);
+        }
     </style>
 </head>
 <body class="investment-theme">
     <div class="container">
         <header class="header" style="background: rgba(255, 255, 255, 0.15);">
             <h1><i class="fas fa-handshake"></i> Investment Partnership</h1>
-            <p>Powered by <strong>Helios Investment Partners</strong> & AVA-Digital</p>
+            <p>Powered by <strong>Helios Investment Partners</strong> &amp; AVA-Digital</p>
             <p style="margin-top: 10px; font-size: 0.95rem;">
                 Invest in Africa's growing economy through trusted asset managers
             </p>
@@ -657,7 +723,52 @@
             if (profile) userTier = profile.tier;
         }
 
-        loadUserTier();
+        async function loadProgressBars() {
+            const { data: firms } = await supabase
+                .from('investment_firms')
+                .select('firm_name, progress_percentage, days_until_full');
+
+            if (!firms) return;
+
+            // Build a map for quick lookup
+            const firmMap = {};
+            firms.forEach(f => firmMap[f.firm_name] = f);
+
+            // Find all firm cards and inject progress bars
+            document.querySelectorAll('.firm-card').forEach(card => {
+                const firmName = card.querySelector('h3').textContent.trim();
+                const firmData = firmMap[firmName];
+                if (!firmData) return;
+
+                const pct = firmData.progress_percentage || 0;
+                const days = firmData.days_until_full || 0;
+
+                const progressHTML = `
+                    <div class="progress-wrapper">
+                        <div class="progress-label">
+                            <span>Fund Capacity</span>
+                            <span style="color:#69F0AE;">${pct}% filled</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" style="width: ${pct}%"></div>
+                        </div>
+                        <div class="progress-meta">
+                            <span class="pct">${100 - pct}% remaining</span>
+                            <span class="days">⏱ Est. ${days} day${days !== 1 ? 's' : ''} until full</span>
+                        </div>
+                    </div>
+                `;
+
+                // Insert progress bar before the action buttons div
+                const buttonDiv = card.querySelector('div[style*="display: flex; gap: 15px"]');
+                if (buttonDiv) {
+                    buttonDiv.insertAdjacentHTML('beforebegin', progressHTML);
+                }
+            });
+        }
+
+        await loadUserTier();
+        await loadProgressBars();
 
         window.investNow = async function(button, minAmount, region) {
             if (region === 'global' && userTier !== 'A3' && userTier !== 'A4') {

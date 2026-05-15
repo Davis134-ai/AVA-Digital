@@ -281,16 +281,16 @@
         }
 
         .nav-item {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    text-decoration: none;
-                    color: #6A6A8A;
-                    font-size: 0.75rem;
-                    font-weight: 600;
-                    transition: all 0.2s;
-                    padding: 6px 14px;
-                    border-radius: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #6A6A8A;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            padding: 6px 14px;
+            border-radius: 40px;
         }
 
         .nav-item i {
@@ -300,7 +300,7 @@
 
         .nav-item.active {
             color: #CC1177;
-                    background: rgba(204,17,119,0.04);
+            background: rgba(204,17,119,0.04);
         }
 
         h2 { color: #1E1E3A; }
@@ -426,6 +426,24 @@
             <div style="margin-top: 20px; font-size: 0.9rem; opacity: 0.9;">
                 <i class="fas fa-info-circle"></i> Share your code with friends to start earning
             </div>
+
+            <!-- Disclaimer for free/internship users only -->
+            <div id="referral-tier-notice" style="
+                display: none;
+                margin-top: 18px;
+                background: rgba(255,255,255,0.08);
+                border: 1px solid rgba(255,255,255,0.2);
+                border-radius: 16px;
+                padding: 16px 18px;
+                font-size: 0.88rem;
+                line-height: 1.6;
+                color: rgba(255,255,255,0.85);
+                text-align: left;
+            ">
+                <i class="fas fa-exclamation-circle" style="color: #FF7A00; margin-right: 6px;"></i>
+                <strong style="color: #FF7A00;">Not yet earning referral commissions.</strong><br>
+                You are currently on the <span id="notice-tier">Free</span> tier. When you share a referral link it will use the code of the person who referred you. Upgrade to <strong>A1 or above</strong> to get your own referral link and start earning 10% commission on every person you bring in.
+            </div>
         </div>
 
         <a href="referrals.html" class="view-referrals-link">
@@ -456,13 +474,6 @@
                     <h4><i class="fas fa-shield-alt"></i> Security</h4>
                     <p>Last login: Today, 10:30 AM</p>
                 </div>
-            </div>
-            
-            <div style="margin-top: 30px; text-align: center;">
-                <h3 style="margin-bottom: 16px;">Don't have cash? You can still join</h3>
-                <button class="btn btn-secondary" onclick="window.location.href='https://signal.me/#eu/X_g_n9iKhd9o2K9Uw-Ttir8S04RyW40GarqcuRt51ysF2I0qSmBPLJ-AI45zYXQb'">
-                    <i class="fas fa-arrow-right"></i> Check Eligibility
-                </button>
             </div>
         </div>
     </div>
@@ -539,8 +550,8 @@
                 document.getElementById('user-joined').textContent = 'Joined ' + monthName;
                 document.getElementById('total-balance').textContent = fmt(profile.balance);
                 document.getElementById('total-income').textContent = fmt(profile.total_earned);
-                
-                // ----- FIX 1: Store actual DB code and show display code -----
+
+                // Store actual DB code and show display code
                 let refCode = profile.referral_code || 'AVA-XXXXXX';
                 let displayCode = refCode;
                 if (refCode.startsWith('AFRITRAILER-')) {
@@ -549,7 +560,7 @@
                 document.getElementById('user-referral-code').textContent = displayCode;
                 // Store actual database code for link copying
                 document.getElementById('user-referral-code').dataset.actualCode = refCode;
-                
+
                 document.getElementById('current-month').textContent = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
             }
 
@@ -602,22 +613,65 @@
                 document.getElementById('referral-commission').textContent = fmt(totalCommission);
                 document.getElementById('referral-count').textContent = referrals.length;
             }
+
+            // Show referral tier notice for free/internship users
+            const tierBottom = document.getElementById('user-tier-bottom').textContent.trim();
+            if (!['A1', 'A2', 'A3', 'A4'].includes(tierBottom)) {
+                document.getElementById('referral-tier-notice').style.display = 'block';
+                document.getElementById('notice-tier').textContent = tierBottom === 'free' ? 'Free' : 'Internship';
+            }
         }
 
-        // ----- FIX 2: Use the actual database code, not the display code -----
-        function copyReferralCode() {
+        async function copyReferralCode() {
             const tier = document.getElementById('user-tier-bottom').textContent.trim();
-            if (!['A1', 'A2', 'A3', 'A4'].includes(tier)) {
-                alert('You need to be on tier A1 or above to share referral links. Upgrade your tier to unlock this feature.');
-                return;
+
+            if (['A1', 'A2', 'A3', 'A4'].includes(tier)) {
+                // Paid tier — copy their own referral link as normal
+                const actualCode = document.getElementById('user-referral-code').dataset.actualCode
+                                || document.getElementById('user-referral-code').textContent;
+                const link = window.location.origin + '/register.html?ref=' + actualCode;
+                navigator.clipboard.writeText(link).then(() => {
+                    alert('Referral link copied to clipboard!');
+                });
+            } else {
+                // Free or internship — look up who referred them and use that person's code
+                const { data: { user } } = await getCurrentUser();
+                if (!user) return;
+
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('referred_by')
+                    .eq('id', user.id)
+                    .single();
+
+                if (!profile || !profile.referred_by) {
+                    alert('You were not referred by anyone. Upgrade to A1 or above to share your own referral link.');
+                    return;
+                }
+
+                // Get referrer's referral code
+                const { data: referrer } = await supabase
+                    .from('profiles')
+                    .select('referral_code')
+                    .eq('id', profile.referred_by)
+                    .single();
+
+                if (!referrer) {
+                    alert('Could not find referral information. Please try again.');
+                    return;
+                }
+
+                let referrerCode = referrer.referral_code;
+                let displayCode = referrerCode;
+                if (referrerCode.startsWith('AFRITRAILER-')) {
+                    displayCode = 'AVA-' + referrerCode.substring(12);
+                }
+
+                const link = window.location.origin + '/register.html?ref=' + referrerCode;
+                navigator.clipboard.writeText(link).then(() => {
+                    alert(`Link copied! Since you are not yet on a paid tier, this link uses the referral code of the person who referred you (${displayCode}). Upgrade to A1 or above to share your own referral link and earn commissions.`);
+                });
             }
-            // Use actual database code not display code
-            const actualCode = document.getElementById('user-referral-code').dataset.actualCode
-                            || document.getElementById('user-referral-code').textContent;
-            const link = window.location.origin + '/register.html?ref=' + actualCode;
-            navigator.clipboard.writeText(link).then(() => {
-                alert('Referral link copied to clipboard!');
-            });
         }
 
         window.copyReferralCode = copyReferralCode;

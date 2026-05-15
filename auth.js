@@ -13,28 +13,17 @@ export async function register(phone, password, referralCode = null) {
   const user = authData.user;
   if (!user) throw new Error('Registration failed')
 
-  // ----- FIX: Look up referrer with fallback for old AFRITRAILER- codes -----
+  // Look up referrer via secure RPC function
   let referrerId = null;
   if (referralCode) {
-    // Try the code as provided first
-    let { data: referrer } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('referral_code', referralCode)
-        .single();
-
-    // If not found and code starts with AVA-, try the old AFRITRAILER- prefix
-    if (!referrer && referralCode.startsWith('AVA-')) {
-        const oldCode = 'AFRITRAILER-' + referralCode.substring(4);
-        const { data: referrer2 } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('referral_code', oldCode)
-            .single();
-        referrer = referrer2;
+    const { data: id1 } = await supabase.rpc('get_referrer_id', { code: referralCode });
+    if (id1) {
+      referrerId = id1;
+    } else if (referralCode.startsWith('AVA-')) {
+      const oldCode = 'AFRITRAILER-' + referralCode.substring(4);
+      const { data: id2 } = await supabase.rpc('get_referrer_id', { code: oldCode });
+      if (id2) referrerId = id2;
     }
-
-    if (referrer) referrerId = referrer.id;
   }
 
   // Create profile with referred_by included from the start
@@ -43,7 +32,7 @@ export async function register(phone, password, referralCode = null) {
     .insert({
       id: user.id,
       phone,
-      referral_code: 'AVA-' + Math.random().toString(36).substr(2, 6).toUpperCase(), // ← Updated prefix
+      referral_code: 'AVA-' + Math.random().toString(36).substr(2, 6).toUpperCase(),
       tier: 'free',
       daily_limit: 0,
       balance: 0,

