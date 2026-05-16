@@ -240,7 +240,13 @@
     </div>
 
     <script type="module">
-        import { login } from './auth.js'
+        import { login, getCurrentUser } from './auth.js'
+        
+        // ----- FIX BACK NAVIGATION: If already logged in, replace login page with home -----
+        const { data: { user } } = await getCurrentUser();
+        if (user) {
+            window.location.replace('home.html');
+        }
         
         const phoneInput = document.getElementById('phone');
         const phoneError = document.getElementById('phone-error');
@@ -263,7 +269,8 @@
             
             try {
                 await login(phone, password);
-                window.location.href = 'home.html';
+                // ----- FIX BACK NAVIGATION: use replace so login page is not in history -----
+                window.location.replace('home.html');
             } catch (err) {
                 alert('Login failed: ' + err.message);
             }

@@ -307,5 +307,25 @@
             <strong>Disclaimer:</strong> Referrals must be successful to claim positions. A successful referral is a user who has upgraded to any paid tier (A1–A4) and remains active. All benefits are subject to company policies and may be adjusted.
         </div>
     </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="home.html" class="nav-item"><i class="fas fa-home"></i><span>Home</span></a>
+        <a href="invest.html" class="nav-item"><i class="fas fa-chart-line"></i><span>Invest</span></a>
+        <a href="task.html" class="nav-item"><i class="fas fa-tasks"></i><span>Task</span></a>
+        <a href="level.html" class="nav-item"><i class="fas fa-trophy"></i><span>Level</span></a>
+        <a href="profile.html" class="nav-item"><i class="fas fa-user"></i><span>Profile</span></a>
+    </nav>
+
+    <script type="module">
+        import { getCurrentUser } from './auth.js';
+
+        // ----- PROTECTED PAGE: redirect to login if not authenticated (use replace) -----
+        const { data: { user }, error: userError } = await getCurrentUser();
+        if (userError || !user) {
+            window.location.replace('index.html');
+        }
+        // No further logic needed – page content is static
+    </script>
 </body>
 </html>

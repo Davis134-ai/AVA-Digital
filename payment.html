@@ -175,6 +175,13 @@
         import { supabase } from './supabase.js';
         import { getCurrentUser } from './auth.js';
 
+        // ----- FIX BACK NAVIGATION: Immediately redirect to login if not authenticated -----
+        const { data: { user }, error: userError } = await getCurrentUser();
+        if (userError || !user) {
+            window.location.replace('index.html');
+            // The rest of the script will not execute because of the redirect.
+        }
+
         const TIER_COSTS = {
             'A1': 30000,
             'A2': 90000,
@@ -185,17 +192,14 @@
         const pending = JSON.parse(localStorage.getItem('pendingPayment'));
         if (!pending) {
             alert('No pending payment found.');
-            window.location.href = 'home.html';
+            window.location.replace('home.html');  // Use replace to avoid history stack
         }
 
         document.getElementById('paymentAmount').textContent = 'UGX ' + (pending.price || pending.amount).toLocaleString();
 
         document.getElementById('confirmPayment').addEventListener('click', async () => {
             try {
-                const { data: { user }, error: userError } = await getCurrentUser();
-                if (userError || !user) throw new Error('Not logged in');
-
-                // Get user's profile
+                // Get user's profile (user is already verified)
                 const { data: profile, error: profileError } = await supabase
                     .from('profiles')
                     .select('phone, balance, tier')
@@ -279,7 +283,7 @@
                 }
 
                 localStorage.removeItem('pendingPayment');
-                window.location.href = 'home.html';
+                window.location.replace('home.html');  // Use replace to avoid history stack
 
             } catch (err) {
                 console.error(err);

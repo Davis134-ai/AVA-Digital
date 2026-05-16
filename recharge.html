@@ -202,6 +202,13 @@
         import { supabase } from './supabase.js';
         import { getCurrentUser } from './auth.js';
 
+        // ----- FIX BACK NAVIGATION: Immediately redirect to login if not authenticated -----
+        const { data: { user }, error: userError } = await getCurrentUser();
+        if (userError || !user) {
+            window.location.replace('index.html');
+            // The rest of the script will not execute because of the redirect.
+        }
+
         let currentTab = 'mtn';
         let assignedTab = 'mtn';
         let pendingAmount = 0;
@@ -230,8 +237,6 @@
         const AIRTEL_PENDING_WEBHOOK = 'https://discord.com/api/webhooks/1505160653495734413/J_NJ7qQMzsQs_Kril4WKd_qYdKk6xwABxU9gXveNcrwvTsCCTAleZY8heAvkyiyJfsnF';
 
         async function detectNetwork() {
-            const { data: { user } } = await getCurrentUser();
-            if (!user) return;
             const { data: profile } = await supabase
                 .from('profiles')
                 .select('phone')
@@ -286,7 +291,8 @@
                     body: JSON.stringify({ content: msg })
                 });
                 alert('Thank you for your payment. It will be confirmed shortly.');
-                window.location.href = 'home.html';
+                // Use replace so the back button cannot return to the recharge page
+                window.location.replace('home.html');
             } catch (err) {
                 console.error(err);
                 alert('Error sending request: ' + err.message);
@@ -301,9 +307,6 @@
             }
 
             try {
-                const { data: { user }, error: userError } = await getCurrentUser();
-                if (userError || !user) throw new Error('Not logged in');
-
                 const { data: profile, error: profileError } = await supabase
                     .from('profiles')
                     .select('phone, wallet_names')
@@ -321,7 +324,6 @@
                 if (insertError) throw insertError;
 
                 if (currentTab === 'airtel') {
-                    // Fire pending notification to Airtel webhook
                     await fetch(AIRTEL_PENDING_WEBHOOK, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -329,16 +331,13 @@
                             content: `📲 Airtel user ${profile.phone} pending recharge of UGX ${amount.toLocaleString()}`
                         })
                     });
-                    // Store details for confirm.html
                     sessionStorage.setItem('airtel_recharge', JSON.stringify({
                         amount,
                         phone: profile.phone,
                         walletName: pendingWalletName
                     }));
                     window.location.href = 'confirm.html';
-
                 } else {
-                    // MTN: show fee popup
                     const networkFee = getNetworkFee(amount);
                     const totalNeeded = amount + networkFee;
                     document.getElementById('fee-popup-message').textContent =

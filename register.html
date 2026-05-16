@@ -211,9 +211,15 @@
     </div>
 
     <script type="module">
-        import { register } from './auth.js'
+        import { register, getCurrentUser } from './auth.js'
 
-        // Prevent more than 9 digits and warn if starts with 0
+        // ----- FIX BACK NAVIGATION: If already logged in, redirect to home (replace) -----
+        const { data: { user } } = await getCurrentUser();
+        if (user) {
+            window.location.replace('home.html');
+        }
+
+        // Phone input validation
         document.getElementById('phone').addEventListener('input', function() {
             let value = this.value.replace(/\D/g, '');
             if (value.length > 9) {
@@ -251,7 +257,8 @@
             try {
                 await register(phone, password, referral);
                 alert('Registration successful! Please login.');
-                window.location.href = 'index.html';
+                // Use replace so the register page is not in history
+                window.location.replace('index.html');
             } catch (err) {
                 alert('Registration failed: ' + err.message);
             }

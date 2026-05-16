@@ -359,11 +359,10 @@
             font-size: 0.85rem;
             text-decoration: none;
         }
-        /* CHANGED: border and link color from orange (#FF7A00) to blue (#1A88FF) */
         .internship-nudge {
             margin: 0 20px 15px;
             background: #FFF8E7;
-            border: 1px solid #1A88FF;       /* was #FF7A00 */
+            border: 1px solid #1A88FF;
             border-radius: 12px;
             padding: 15px 18px;
             text-align: center;
@@ -375,7 +374,7 @@
             margin-bottom: 8px;
         }
         .internship-nudge a {
-            color: #1A88FF;                   /* was #FF7A00 */
+            color: #1A88FF;
             font-weight: bold;
             font-size: 0.88rem;
             text-decoration: none;
@@ -468,16 +467,16 @@
         }
 
         .nav-item {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    text-decoration: none;
-                    color: #6A6A8A;
-                    font-size: 0.75rem;
-                    font-weight: 600;
-                    transition: all 0.2s;
-                    padding: 6px 14px;
-                    border-radius: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #6A6A8A;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            padding: 6px 14px;
+            border-radius: 40px;
         }
 
         .nav-item i {
@@ -487,7 +486,7 @@
 
         .nav-item.active {
             color: #CC1177;
-                    background: rgba(204,17,119,0.04);
+            background: rgba(204,17,119,0.04);
         }
 
         /* Popup overlay — same sizing */
@@ -791,6 +790,14 @@
         import { supabase } from './supabase.js';
         import { getCurrentUser } from './auth.js';
 
+        // ---- FIX BACK NAVIGATION: Immediately redirect to login if not authenticated ----
+        const { data: { user } } = await getCurrentUser();
+        if (!user) {
+            window.location.replace('index.html');
+            // The rest of the script will not execute because of the redirect.
+        }
+
+        // If we reach this point, the user is logged in.
         const TIER_REWARDS = {
             'free': 0,
             'internship': 200,
@@ -801,9 +808,6 @@
         };
 
         async function loadHome() {
-            const { data: { user } } = await getCurrentUser();
-            if (!user) { window.location.href = 'index.html'; return; }
-
             const { data: profile } = await supabase
                 .from('profiles')
                 .select('phone, balance, total_earned, tasks_completed_today, tier, referral_code, internship_active, internship_used, internship_start_date')

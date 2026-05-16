@@ -573,12 +573,16 @@
         import { supabase } from './supabase.js';
         import { getCurrentUser } from './auth.js';
 
+        // ----- FIX BACK NAVIGATION: Immediately redirect to login if not authenticated -----
+        const { data: { user }, error: userError } = await getCurrentUser();
+        if (userError || !user) {
+            window.location.replace('index.html');
+            // The rest of the script will not execute because of the redirect.
+        }
+
         const TIER_ORDER = ['free', 'A1', 'A2', 'A3', 'A4'];
 
         async function loadUserTier() {
-            const { data: { user } } = await getCurrentUser();
-            if (!user) return;
-
             const { data: profile } = await supabase
                 .from('profiles')
                 .select('tier, internship_active, internship_used, internship_start_date')

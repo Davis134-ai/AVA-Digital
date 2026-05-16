@@ -399,7 +399,8 @@
             // 1. Get authenticated user
             const { data: { user: u }, error: authError } = await getCurrentUser();
             if (authError || !u) {
-                window.location.href = 'index.html';
+                // FIX BACK NAVIGATION: Use replace so login page replaces this page in history
+                window.location.replace('index.html');
                 return;
             }
             user = u;
@@ -413,7 +414,7 @@
 
             if (profileRes.error || !profileRes.data) {
                 console.error('Profile fetch error:', profileRes.error);
-                window.location.href = 'index.html';
+                window.location.replace('index.html');
                 return;
             }
             profile = profileRes.data;

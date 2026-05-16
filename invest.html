@@ -710,11 +710,16 @@
         import { supabase } from './supabase.js';
         import { getCurrentUser } from './auth.js';
 
+        // ----- FIX BACK NAVIGATION: Immediately redirect to login if not authenticated -----
+        const { data: { user }, error: userError } = await getCurrentUser();
+        if (userError || !user) {
+            window.location.replace('index.html');
+            // The rest of the script will not execute because of the redirect.
+        }
+
         let userTier = 'free';
 
         async function loadUserTier() {
-            const { data: { user } } = await getCurrentUser();
-            if (!user) return;
             const { data: profile } = await supabase
                 .from('profiles')
                 .select('tier')
@@ -730,11 +735,9 @@
 
             if (!firms) return;
 
-            // Build a map for quick lookup
             const firmMap = {};
             firms.forEach(f => firmMap[f.firm_name] = f);
 
-            // Find all firm cards and inject progress bars
             document.querySelectorAll('.firm-card').forEach(card => {
                 const firmName = card.querySelector('h3').textContent.trim();
                 const firmData = firmMap[firmName];
@@ -759,7 +762,6 @@
                     </div>
                 `;
 
-                // Insert progress bar before the action buttons div
                 const buttonDiv = card.querySelector('div[style*="display: flex; gap: 15px"]');
                 if (buttonDiv) {
                     buttonDiv.insertAdjacentHTML('beforebegin', progressHTML);
@@ -771,7 +773,6 @@
         await loadProgressBars();
 
         window.investNow = async function(button, minAmount, region) {
-            // Updated tier check: allow A2, A3, A4 for global firms
             if (region === 'global' && userTier !== 'A2' && userTier !== 'A3' && userTier !== 'A4') {
                 alert('Please upgrade to tier A2 or above to access these investment opportunities');
                 return;
@@ -781,19 +782,8 @@
             const input = firmCard.querySelector('.investment-input');
             const amount = parseInt(input.value);
 
-            if (!amount) {
-                alert('Please input an amount to proceed');
-                return;
-            }
-
-            if (amount < minAmount) {
-                alert('Please input an amount to proceed');
-                return;
-            }
-
-            const { data: { user } } = await getCurrentUser();
-            if (!user) {
-                alert('Please log in to continue');
+            if (!amount || amount < minAmount) {
+                alert('Please input a valid amount (minimum UGX ' + minAmount.toLocaleString() + ')');
                 return;
             }
 
@@ -804,7 +794,7 @@
                 .single();
 
             if (!profile || profile.balance < amount) {
-                alert('Insufficient balance please recharge more funds to continue');
+                alert('Insufficient balance. Please recharge more funds to continue.');
                 return;
             }
 
@@ -845,6 +835,7 @@
                 firm: firmName
             }));
 
+            // Keep internal navigation as href (no history stack concern)
             window.location.href = 'payment.html';
         }
     </script>
