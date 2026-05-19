@@ -231,16 +231,16 @@
         }
 
         .nav-item {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    text-decoration: none;
-                    color: #6A6A8A;
-                    font-size: 0.75rem;
-                    font-weight: 600;
-                    transition: all 0.2s;
-                    padding: 6px 14px;
-                    border-radius: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #6A6A8A;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            padding: 6px 14px;
+            border-radius: 40px;
         }
 
         .nav-item i {
@@ -250,7 +250,7 @@
 
         .nav-item.active {
             color: #CC1177;
-                    background: rgba(204,17,119,0.04);
+            background: rgba(204,17,119,0.04);
         }
 
         h2, h3 { color: #1E1E3A; }
@@ -292,7 +292,7 @@
                 <li>Watch for at least 10 seconds to unlock the claim button</li>
                 <li>Earn rewards per video based on your tier</li>
                 <li id="daily-limit-info">Upgrade your tier to watch videos daily</li>
-                <li>Daily limit resets every midnight</li>
+                <li>Daily limit resets every midnight (Uganda time)</li>
             </ul>
         </div>
 
@@ -371,6 +371,34 @@
             'A4':         { reward: 1437, limit: 20 }
         };
 
+        // ─── UGANDA TIME HELPERS ───────────────────────────────────────────────────
+        // All date comparisons MUST use Uganda time (UTC+3) to match the DB default
+        // we set with: (now() AT TIME ZONE 'Africa/Kampala')::date
+
+        /**
+         * Returns today's date string in Uganda time as "YYYY-MM-DD".
+         * e.g. at 11:30pm UTC on May 19, Uganda is already May 20 → returns "2026-05-20"
+         */
+        function getUgandaDateString() {
+            return new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Kampala' });
+            // en-CA locale gives ISO format YYYY-MM-DD, which matches the DB date column
+        }
+
+        /**
+         * Returns milliseconds until the next Uganda midnight,
+         * so we can reload the page at the exact moment the day rolls over.
+         */
+        function msUntilUgandaMidnight() {
+            const now = new Date();
+            // Get Uganda "now" as a date string, then build next midnight in Uganda time
+            const ugandaNow = new Date(now.toLocaleString('en-US', { timeZone: 'Africa/Kampala' }));
+            const ugandaMidnight = new Date(ugandaNow);
+            ugandaMidnight.setHours(24, 0, 0, 0); // next midnight in Uganda local
+            // Difference in real UTC milliseconds
+            return ugandaMidnight.getTime() - ugandaNow.getTime();
+        }
+        // ──────────────────────────────────────────────────────────────────────────
+
         let user, profile, tierConfig, effectiveTier;
         let watchTimers = {};
         let claimedToday = new Set();
@@ -382,8 +410,8 @@
                 container.innerHTML = `
                     <div style="text-align:center; padding: 40px 20px;">
                         <i class="fas fa-moon" style="font-size: 3rem; color: #7B22CC; margin-bottom: 15px; display:block;"></i>
-                        <h3 style="color: var(--text-dark); margin-bottom: 10px;">System Temporarily Closed</h3>
-                        <p style="color: var(--text-light); line-height: 1.6;">${escapeHtml(message) || 'The platform is currently unavailable. Please check back later.'}</p>
+                        <h3 style="color: #1E1E3A; margin-bottom: 10px;">System Temporarily Closed</h3>
+                        <p style="color: #5A5A7A; line-height: 1.6;">${escapeHtml(message) || 'The platform is currently unavailable. Please check back later.'}</p>
                     </div>
                 `;
             }
@@ -399,7 +427,6 @@
             // 1. Get authenticated user
             const { data: { user: u }, error: authError } = await getCurrentUser();
             if (authError || !u) {
-                // FIX BACK NAVIGATION: Use replace so login page replaces this page in history
                 window.location.replace('index.html');
                 return;
             }
@@ -408,8 +435,10 @@
             // 2. Fetch system_settings and profile
             const [settingsRes, profileRes] = await Promise.all([
                 supabase.from('system_settings').select('*'),
-                supabase.from('profiles').select('phone, tier, balance, total_earned, tasks_completed_today, last_reset_date, internship_active, internship_start_date, created_at')
-                    .eq('id', user.id).single()
+                supabase.from('profiles')
+                    .select('phone, tier, balance, total_earned, tasks_completed_today, last_reset_date, internship_active, internship_start_date, created_at')
+                    .eq('id', user.id)
+                    .single()
             ]);
 
             if (profileRes.error || !profileRes.data) {
@@ -427,23 +456,18 @@
                 activeClosure = settingsList.find(setting => {
                     if (setting.system_open === true) return false;
 
-                    // Respect exclude_phones on any row
                     if (setting.exclude_phones && Array.isArray(setting.exclude_phones) &&
                         setting.exclude_phones.includes(profile.phone)) {
                         return false;
                     }
 
-                    if (setting.target === 'all') {
-                        return true; // Global closure
-                    }
+                    if (setting.target === 'all') return true;
 
                     if (setting.target === 'phone') {
                         return setting.target_phone === profile.phone;
                     }
 
-                    // 🔒 FIXED: Conditional target now properly respects target_phones
                     if (setting.target === 'conditional') {
-                        // If target_phones is provided, user must be in that list
                         if (setting.target_phones && Array.isArray(setting.target_phones) && setting.target_phones.length > 0) {
                             if (!setting.target_phones.includes(profile.phone)) return false;
                         }
@@ -459,25 +483,27 @@
                 });
             }
 
-            // If active closure found, block the entire task page
             if (activeClosure) {
                 showSystemClosedUI(activeClosure.closure_message || 'System is temporarily closed for your account.');
                 return;
             }
 
-            // 3. Sunday check (global closure)
-            const now = new Date();
-            const isSunday = now.getDay() === 0;
-            if (isSunday) {
+            // 3. Sunday check — using Uganda time so Sunday is correct locally
+            const ugandaDayOfWeek = new Date(
+                new Date().toLocaleString('en-US', { timeZone: 'Africa/Kampala' })
+            ).getDay();
+
+            if (ugandaDayOfWeek === 0) {
                 document.getElementById('video-container').innerHTML = `
                     <div style="text-align:center; padding: 40px 20px;">
                         <i class="fas fa-moon" style="font-size: 3rem; color: #7B22CC; margin-bottom: 15px; display:block;"></i>
-                        <h3 style="color: var(--text-dark); margin-bottom: 10px;">Closed on Sundays</h3>
-                        <p style="color: var(--text-light); line-height: 1.6;">No tasks or work are done on Sundays. The platform is closed for maintenance and updates. Come back tomorrow!</p>
+                        <h3 style="color: #1E1E3A; margin-bottom: 10px;">Closed on Sundays</h3>
+                        <p style="color: #5A5A7A; line-height: 1.6;">No tasks or work are done on Sundays. The platform is closed for maintenance and updates. Come back tomorrow!</p>
                     </div>
                 `;
                 document.getElementById('header-subtitle').textContent = 'Closed today — see you tomorrow!';
                 document.getElementById('videos-remaining').textContent = '0';
+                scheduleMidnightReset();
                 return;
             }
 
@@ -489,27 +515,45 @@
             }
             tierConfig = TIER_CONFIG[effectiveTier] || TIER_CONFIG['free'];
 
-            // 5. Daily reset logic
-            const lastReset = new Date(profile.last_reset_date);
-            const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-            if (lastReset < todayMidnight) {
+            // 5. ── DAILY RESET LOGIC (Uganda time) ──────────────────────────────
+            // last_reset_date is a PostgreSQL `date` column stored as "YYYY-MM-DD".
+            // We compare it against today's date in Uganda time — NOT UTC —
+            // so the reset always fires at Uganda midnight regardless of the user's
+            // local browser timezone or the server's UTC clock.
+            //
+            // The DB column default is now: (now() AT TIME ZONE 'Africa/Kampala')::date
+            // so both sides of this comparison use Uganda date strings consistently.
+
+            const todayUganda = getUgandaDateString(); // e.g. "2026-05-19"
+            const lastResetStr = profile.last_reset_date; // e.g. "2026-05-19" from DB
+
+            if (lastResetStr !== todayUganda) {
+                // It's a new day in Uganda — reset the counter
                 await supabase
                     .from('profiles')
                     .update({
                         tasks_completed_today: 0,
-                        last_reset_date: now.toISOString().split('T')[0]
+                        last_reset_date: todayUganda
                     })
                     .eq('id', user.id);
                 profile.tasks_completed_today = 0;
+                profile.last_reset_date = todayUganda;
             }
+            // ────────────────────────────────────────────────────────────────────
 
-            // 6. Load already claimed videos today
-            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+            // 6. Load already claimed videos today (Uganda midnight as boundary)
+            const now = new Date();
+            // Build the Uganda midnight timestamp for the start of today
+            const ugandaTodayStr = getUgandaDateString(); // "YYYY-MM-DD"
+            // Construct midnight Uganda time as a UTC ISO string for the DB query
+            // Uganda is UTC+3, so Uganda midnight = (date)T00:00:00+03:00
+            const todayStartUganda = new Date(`${ugandaTodayStr}T00:00:00+03:00`);
+
             const { data: watched } = await supabase
                 .from('user_videos')
                 .select('video_id')
                 .eq('user_id', user.id)
-                .gte('watched_at', todayStart.toISOString());
+                .gte('watched_at', todayStartUganda.toISOString());
             if (watched) watched.forEach(w => claimedToday.add(w.video_id));
 
             // 7. Fetch active videos
@@ -539,18 +583,17 @@
                 document.getElementById('limit-reached-banner').style.display = 'block';
             }
 
-            // 10. Schedule midnight reset
+            // 10. Schedule midnight reset using Uganda time
             scheduleMidnightReset();
         }
 
         function scheduleMidnightReset() {
-            const now = new Date();
-            const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
-            const msUntilMidnight = midnight - now;
-            if (msUntilMidnight > 0 && msUntilMidnight < 86400000) {
+            // ── Uses Uganda midnight, not the browser's local midnight ──
+            const ms = msUntilUgandaMidnight();
+            if (ms > 0 && ms < 86400000) {
                 setTimeout(() => {
                     window.location.reload();
-                }, msUntilMidnight);
+                }, ms);
             }
         }
 
