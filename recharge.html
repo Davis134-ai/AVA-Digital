@@ -149,7 +149,7 @@
                 </ol>
             </div>
 
-            <!-- Airtel Instructions (updated) -->
+            <!-- Airtel Instructions -->
             <div id="instructions-airtel" class="instructions-card" style="display:none;">
                 <h4><i class="fas fa-info-circle"></i> Airtel Money Instructions</h4>
                 <ol>
@@ -202,13 +202,6 @@
         import { supabase } from './supabase.js';
         import { getCurrentUser } from './auth.js';
 
-        // ----- FIX BACK NAVIGATION: Immediately redirect to login if not authenticated -----
-        const { data: { user }, error: userError } = await getCurrentUser();
-        if (userError || !user) {
-            window.location.replace('index.html');
-            // The rest of the script will not execute because of the redirect.
-        }
-
         let currentTab = 'mtn';
         let assignedTab = 'mtn';
         let pendingAmount = 0;
@@ -237,6 +230,8 @@
         const AIRTEL_PENDING_WEBHOOK = 'https://discord.com/api/webhooks/1505160653495734413/J_NJ7qQMzsQs_Kril4WKd_qYdKk6xwABxU9gXveNcrwvTsCCTAleZY8heAvkyiyJfsnF';
 
         async function detectNetwork() {
+            const { data: { user } } = await getCurrentUser();
+            if (!user) return;
             const { data: profile } = await supabase
                 .from('profiles')
                 .select('phone')
@@ -284,15 +279,20 @@
         document.getElementById('fee-confirm-btn').addEventListener('click', async () => {
             document.getElementById('fee-popup-overlay').style.display = 'none';
             try {
+                // Fire webhook immediately as before
                 const msg = `🔋 Recharge Request!\n💳 Payment Method: MTN MoMo\n📞 Phone: ${pendingPhone}\n👤 Name: ${pendingWalletName}\n💰 Amount: UGX ${pendingAmount.toLocaleString()}`;
                 await fetch(getMtnWebhookUrl(pendingAmount), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ content: msg })
                 });
-                alert('Thank you for your payment. It will be confirmed shortly.');
-                // Use replace so the back button cannot return to the recharge page
-                window.location.replace('home.html');
+                // Store MTN recharge details for confirm.html and redirect
+                sessionStorage.setItem('mtn_recharge', JSON.stringify({
+                    amount: pendingAmount,
+                    phone: pendingPhone,
+                    walletName: pendingWalletName
+                }));
+                window.location.href = 'confirm.html';
             } catch (err) {
                 console.error(err);
                 alert('Error sending request: ' + err.message);
@@ -307,6 +307,9 @@
             }
 
             try {
+                const { data: { user }, error: userError } = await getCurrentUser();
+                if (userError || !user) throw new Error('Not logged in');
+
                 const { data: profile, error: profileError } = await supabase
                     .from('profiles')
                     .select('phone, wallet_names')
