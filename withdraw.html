@@ -324,237 +324,282 @@
         </div>
     </div>
 
-    <script type="module">
-    import { supabase } from './supabase.js';
-    import { getCurrentUser } from './auth.js';
+   <script type="module">
+import { supabase } from './supabase.js';
+import { getCurrentUser } from './auth.js';
 
-    // ----- FIX BACK NAVIGATION: Immediately redirect to login if not authenticated -----
-    const { data: { user }, error: userError } = await getCurrentUser();
-    if (userError || !user) {
-        window.location.replace('index.html');
-    }
+// ----- FIX BACK NAVIGATION: Immediately redirect to login if not authenticated -----
+const { data: { user }, error: userError } = await getCurrentUser();
+if (userError || !user) {
+    window.location.replace('index.html');
+}
 
-    let currentBalance = 0;
-    let userTier = 'free';
-    let minAmount = 2000;
-    let hasWithdrawn = false;
-    let isRestricted = false;
+// ===================================================================
+// TOGGLE: this ONLY controls the extra UI restrictions for a
+// free/internship user's first (and only) withdrawal:
+//   - locking the amount field to exactly UGX 2,000
+//   - hiding the quick-amount buttons
+//   - showing the "must be exactly 2,000" restricted-notice
+//   - requiring amount === 2000 on submit
+//
+// The lifetime one-withdrawal cap itself (blocking a SECOND withdrawal
+// for free/internship users) is ALWAYS enforced below, regardless of
+// this flag. When this is `false`, a free/internship user's single
+// allowed withdrawal behaves like a normal withdrawal (any amount >=
+// minAmount, quick buttons visible, 0% commission since isRestricted
+// still drives that) — but they still only get the one.
+// ===================================================================
+const ENFORCE_ONE_TIME_RESTRICTION = false;
 
-    async function loadBalance() {
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('balance, tier, internship_active, wallet_names')
-            .eq('id', user.id)
-            .single();
+let currentBalance = 0;
+let userTier = 'free';
+let minAmount = 2000;
+let hasWithdrawn = false;
+let isRestricted = false; // still used for commission calc (unchanged)
 
-        if (profile) {
-            currentBalance = profile.balance;
+async function loadBalance() {
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('balance, tier, internship_active, wallet_names')
+        .eq('id', user.id)
+        .single();
 
-            if (profile.internship_active) {
-                userTier = 'internship';
-                minAmount = 2000;
-                isRestricted = true;
-            } else if (['A1', 'A2', 'A3', 'A4'].includes(profile.tier)) {
-                userTier = profile.tier;
-                minAmount = 7500;
-                isRestricted = false;
-            } else {
-                userTier = 'free';
-                minAmount = 2000;
-                isRestricted = true;
-            }
+    if (profile) {
+        currentBalance = profile.balance;
 
-            document.getElementById('withdrawAmount').placeholder = `Minimum UGX ${minAmount.toLocaleString()}`;
-            document.getElementById('withdrawAmount').min = minAmount;
-
-            // Always lock the names field regardless
-            document.getElementById('withdrawNames').disabled = true;
-
-            // Auto-fill if wallet_names exists
-            if (profile.wallet_names) {
-                document.getElementById('withdrawNames').value = profile.wallet_names;
-            }
-        }
-
-        // Check if user has already made a withdrawal
-        const { data: prevWithdrawals } = await supabase
-            .from('payment_requests')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('type', 'withdrawal');
-
-        hasWithdrawn = prevWithdrawals && prevWithdrawals.length > 0;
-
-        // Show appropriate UI
-        if (isRestricted && hasWithdrawn) {
-            document.getElementById('blocked-notice').style.display = 'block';
-            document.getElementById('withdraw-form').style.display = 'none';
-        } else if (isRestricted && !hasWithdrawn) {
-            document.getElementById('restricted-notice').style.display = 'block';
-            const amountInput = document.getElementById('withdrawAmount');
-            amountInput.value = 2000;
-            amountInput.readOnly = true;
-            document.querySelector('.quick-amounts').style.display = 'none';
-            updateCommission();
-        }
-    }
-
-    loadBalance();
-
-    window.setAmount = function(amount) {
-        if (isRestricted && !hasWithdrawn) return;
-        document.getElementById('withdrawAmount').value = amount;
-        updateCommission();
-    };
-
-    window.setHalf = function() {
-        if (isRestricted && !hasWithdrawn) return;
-        setAmount(Math.floor(currentBalance / 2));
-    };
-
-    window.setMax = function() {
-        if (isRestricted && !hasWithdrawn) return;
-        setAmount(currentBalance);
-    };
-
-    function updateCommission() {
-        const amount = parseFloat(document.getElementById('withdrawAmount').value) || 0;
-        if (amount >= minAmount) {
-            let commission = 0;
-            let net = 0;
-
-            if (isRestricted) {
-                commission = 0;
-                net = amount - 500;
-                document.getElementById('commissionLine').style.display = 'none';
-            } else {
-                commission = amount * 0.1;
-                net = amount - commission - 500;
-                document.getElementById('commissionLine').style.display = 'block';
-                document.getElementById('commissionAmount').textContent = 'UGX ' + commission.toLocaleString();
-            }
-
-            document.getElementById('netAmount').textContent = 'UGX ' + net.toLocaleString();
-            document.getElementById('commissionDisplay').style.display = 'block';
+        if (profile.internship_active) {
+            userTier = 'internship';
+            minAmount = 2000;
+            isRestricted = true;
+        } else if (['A1', 'A2', 'A3', 'A4'].includes(profile.tier)) {
+            userTier = profile.tier;
+            minAmount = 7500;
+            isRestricted = false;
         } else {
-            document.getElementById('commissionDisplay').style.display = 'none';
+            userTier = 'free';
+            minAmount = 2000;
+            isRestricted = true;
+        }
+
+        document.getElementById('withdrawAmount').placeholder = `Minimum UGX ${minAmount.toLocaleString()}`;
+        document.getElementById('withdrawAmount').min = minAmount;
+
+        // Always lock the names field regardless
+        document.getElementById('withdrawNames').disabled = true;
+
+        // Auto-fill if wallet_names exists
+        if (profile.wallet_names) {
+            document.getElementById('withdrawNames').value = profile.wallet_names;
         }
     }
 
-    document.getElementById('withdrawAmount').addEventListener('input', updateCommission);
+    // Check if user has already made a withdrawal
+    const { data: prevWithdrawals } = await supabase
+        .from('payment_requests')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('type', 'withdrawal');
 
-    document.getElementById('confirmWithdraw').addEventListener('click', async () => {
-        const amount = parseFloat(document.getElementById('withdrawAmount').value);
-        const names = document.getElementById('withdrawNames').value.trim();
+    hasWithdrawn = prevWithdrawals && prevWithdrawals.length > 0;
 
-        // Check system closure
-        const { data: settingsList } = await supabase.from('system_settings').select('*');
-        const { data: currentProfile } = await supabase.from('profiles').select('phone, tier, balance, created_at').eq('id', user.id).single();
+    // ===================================================================
+    // Lifetime cap for free/internship: ALWAYS enforced, independent of
+    // ENFORCE_ONE_TIME_RESTRICTION. Once they've withdrawn once, they're
+    // blocked regardless of the flag's value.
+    // ===================================================================
+    if (isRestricted && hasWithdrawn) {
+        document.getElementById('blocked-notice').style.display = 'block';
+        document.getElementById('withdraw-form').style.display = 'none';
+        return;
+    }
 
-        if (settingsList && currentProfile) {
-            const closure = settingsList.find(s => {
-                if (s.system_open === true) return false;
-                if (s.exclude_phones && s.exclude_phones.includes(currentProfile.phone)) return false;
-                if (s.target === 'all') return true;
-                if (s.target === 'phone') return s.target_phone === currentProfile.phone;
-                
-                if (s.target === 'conditional') {
-                    if (s.target_phones && Array.isArray(s.target_phones) && s.target_phones.length > 0) {
-                        if (!s.target_phones.includes(currentProfile.phone)) return false;
-                    }
-                    if (s.target_tier && s.target_tier !== currentProfile.tier) return false;
-                    if (s.target_min_balance != null && currentProfile.balance < s.target_min_balance) return false;
-                    if (s.target_max_balance != null && currentProfile.balance > s.target_max_balance) return false;
-                    if (s.target_created_after && new Date(currentProfile.created_at) < new Date(s.target_created_after)) return false;
-                    if (s.target_created_before && new Date(currentProfile.created_at) > new Date(s.target_created_before)) return false;
-                    return true;
-                }
-                return false;
-            });
-            if (closure) {
-                alert('Withdrawal unavailable: ' + (closure.closure_message || 'The system is currently closed for your account.'));
-                return;
-            }
+    if (ENFORCE_ONE_TIME_RESTRICTION && isRestricted && !hasWithdrawn) {
+        // Extra UI restriction: lock amount to exactly 2000, hide quick amounts.
+        document.getElementById('restricted-notice').style.display = 'block';
+        const amountInput = document.getElementById('withdrawAmount');
+        amountInput.value = 2000;
+        amountInput.readOnly = true;
+        document.querySelector('.quick-amounts').style.display = 'none';
+        updateCommission();
+    } else {
+        // Normal form (applies to: paid tiers always, and to
+        // free/internship's single allowed withdrawal when
+        // ENFORCE_ONE_TIME_RESTRICTION is false).
+        const confirmBtn = document.getElementById('confirmWithdraw');
+        if (currentBalance < minAmount) {
+            confirmBtn.disabled = true;
+            confirmBtn.style.opacity = '0.5';
+            confirmBtn.style.cursor = 'not-allowed';
         }
+    }
+}
 
-        if (isRestricted && hasWithdrawn) {
-            alert('You have already used your one free withdrawal. Please upgrade to A1 or above to withdraw again.');
-            return;
-        }
+loadBalance();
 
-        if (isRestricted && !hasWithdrawn && amount !== 2000) {
-            alert('Your first withdrawal must be exactly UGX 2,000.');
-            return;
-        }
+window.setAmount = function(amount) {
+    if (ENFORCE_ONE_TIME_RESTRICTION && isRestricted && !hasWithdrawn) return;
+    document.getElementById('withdrawAmount').value = amount;
+    updateCommission();
+};
 
-        if (!amount || amount < minAmount) {
-            alert(`Minimum withdrawal is UGX ${minAmount.toLocaleString()}`);
-            return;
-        }
-        if (amount > currentBalance) {
-            alert('Insufficient balance');
-            return;
-        }
+window.setHalf = function() {
+    if (ENFORCE_ONE_TIME_RESTRICTION && isRestricted && !hasWithdrawn) return;
+    setAmount(Math.floor(currentBalance / 2));
+};
 
-        if (!names || names.length < 5) {
-            alert('Error. No registered name is added. Please go to Profile > Payments to add a registered name to continue.');
-            return;
-        }
+window.setMax = function() {
+    if (ENFORCE_ONE_TIME_RESTRICTION && isRestricted && !hasWithdrawn) return;
+    setAmount(currentBalance);
+};
 
+function updateCommission() {
+    const amount = parseFloat(document.getElementById('withdrawAmount').value) || 0;
+    if (amount >= minAmount) {
         let commission = 0;
         let net = 0;
+
         if (isRestricted) {
+            commission = 0;
             net = amount - 500;
+            document.getElementById('commissionLine').style.display = 'none';
         } else {
             commission = amount * 0.1;
             net = amount - commission - 500;
+            document.getElementById('commissionLine').style.display = 'block';
+            document.getElementById('commissionAmount').textContent = 'UGX ' + commission.toLocaleString();
         }
 
-        try {
-            const { data: profile, error: profileError } = await supabase
-                .from('profiles')
-                .select('phone, balance')
-                .eq('id', user.id)
-                .single();
-            if (profileError) throw profileError;
+        document.getElementById('netAmount').textContent = 'UGX ' + net.toLocaleString();
+        document.getElementById('commissionDisplay').style.display = 'block';
+    } else {
+        document.getElementById('commissionDisplay').style.display = 'none';
+    }
+}
 
-            const newBalance = profile.balance - amount;
-            const { error: updateError } = await supabase
-                .from('profiles')
-                .update({ balance: newBalance })
-                .eq('id', user.id);
-            if (updateError) throw updateError;
+document.getElementById('withdrawAmount').addEventListener('input', updateCommission);
 
-            const { error: insertError } = await supabase
-                .from('payment_requests')
-                .insert({
-                    user_id: user.id,
-                    type: 'withdrawal',
-                    amount: amount,
-                    phone: profile.phone
-                });
-            if (insertError) throw insertError;
+document.getElementById('confirmWithdraw').addEventListener('click', async () => {
+    const amount = parseFloat(document.getElementById('withdrawAmount').value);
+    const names = document.getElementById('withdrawNames').value.trim();
 
-            const commissionLine = isRestricted
-                ? `Commission: None (${userTier})`
-                : `Commission (10%): UGX ${commission.toLocaleString()}`;
+    // Check system closure
+    const { data: settingsList } = await supabase.from('system_settings').select('*');
+    const { data: currentProfile } = await supabase.from('profiles').select('phone, tier, balance, created_at').eq('id', user.id).single();
 
-            await fetch('https://discord.com/api/webhooks/1476251245294653542/Lj6t5DXs_k-gWdZDBkFh-CoeJPAbqWsi_PsxQbw5fwMZBhKqIviJCLZerO_r9mYAPiKn', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    content: `💸 Withdrawal Request!\n📞 Phone: ${profile.phone}\n👤 Registered Names: ${names}\n💰 Amount: UGX ${amount.toLocaleString()}\n${commissionLine}\n🌐 Network Fee: UGX 500\n✅ Net Amount: UGX ${net.toLocaleString()}\n🏆 Tier: ${userTier}`
-                })
+    if (settingsList && currentProfile) {
+        const closure = settingsList.find(s => {
+            if (s.system_open === true) return false;
+            if (s.exclude_phones && s.exclude_phones.includes(currentProfile.phone)) return false;
+            if (s.target === 'all') return true;
+            if (s.target === 'phone') return s.target_phone === currentProfile.phone;
+
+            if (s.target === 'conditional') {
+                if (s.target_phones && Array.isArray(s.target_phones) && s.target_phones.length > 0) {
+                    if (!s.target_phones.includes(currentProfile.phone)) return false;
+                }
+                if (s.target_tier && s.target_tier !== currentProfile.tier) return false;
+                if (s.target_min_balance != null && currentProfile.balance < s.target_min_balance) return false;
+                if (s.target_max_balance != null && currentProfile.balance > s.target_max_balance) return false;
+                if (s.target_created_after && new Date(currentProfile.created_at) < new Date(s.target_created_after)) return false;
+                if (s.target_created_before && new Date(currentProfile.created_at) > new Date(s.target_created_before)) return false;
+                return true;
+            }
+            return false;
+        });
+        if (closure) {
+            alert('Withdrawal unavailable: ' + (closure.closure_message || 'The system is currently closed for your account.'));
+            return;
+        }
+    }
+
+    // ===================================================================
+    // Lifetime cap: ALWAYS enforced regardless of the flag. A
+    // free/internship user only ever gets one successful withdrawal.
+    // ===================================================================
+    if (isRestricted && hasWithdrawn) {
+        alert('You have already used your one free withdrawal. Please upgrade to A1 or above to withdraw again.');
+        return;
+    }
+
+    // Extra restriction (exact-amount requirement) only when the flag is on.
+    if (ENFORCE_ONE_TIME_RESTRICTION && isRestricted && !hasWithdrawn && amount !== 2000) {
+        alert('Your first withdrawal must be exactly UGX 2,000.');
+        return;
+    }
+
+    // Balance-floor check for free/internship (clearer, tier-specific message).
+    if (isRestricted && currentBalance < minAmount) {
+        alert(`You need a balance of at least UGX ${minAmount.toLocaleString()} to make a withdrawal.`);
+        return;
+    }
+
+    if (!amount || amount < minAmount) {
+        alert(`Minimum withdrawal is UGX ${minAmount.toLocaleString()}`);
+        return;
+    }
+    if (amount > currentBalance) {
+        alert('Insufficient balance');
+        return;
+    }
+
+    if (!names || names.length < 5) {
+        alert('Error. No registered name is added. Please go to Profile > Payments to add a registered name to continue.');
+        return;
+    }
+
+    let commission = 0;
+    let net = 0;
+    if (isRestricted) {
+        net = amount - 500;
+    } else {
+        commission = amount * 0.1;
+        net = amount - commission - 500;
+    }
+
+    try {
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('phone, balance')
+            .eq('id', user.id)
+            .single();
+        if (profileError) throw profileError;
+
+        const newBalance = profile.balance - amount;
+        const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ balance: newBalance })
+            .eq('id', user.id);
+        if (updateError) throw updateError;
+
+        const { error: insertError } = await supabase
+            .from('payment_requests')
+            .insert({
+                user_id: user.id,
+                type: 'withdrawal',
+                amount: amount,
+                phone: profile.phone
             });
+        if (insertError) throw insertError;
 
-            alert('Payment will be processed in 4-48 hours');
-            // FIX BACK NAVIGATION: use replace so the withdraw page is not in history
-            window.location.replace('profile.html');
-        } catch (err) {
-            console.error(err);
-            alert('Error: ' + err.message);
-        }
-    });
-    </script>
+        const commissionLine = isRestricted
+            ? `Commission: None (${userTier})`
+            : `Commission (10%): UGX ${commission.toLocaleString()}`;
+
+        await fetch('https://discord.com/api/webhooks/1476251245294653542/Lj6t5DXs_k-gWdZDBkFh-CoeJPAbqWsi_PsxQbw5fwMZBhKqIviJCLZerO_r9mYAPiKn', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                content: `💸 Withdrawal Request!\n📞 Phone: ${profile.phone}\n👤 Registered Names: ${names}\n💰 Amount: UGX ${amount.toLocaleString()}\n${commissionLine}\n🌐 Network Fee: UGX 500\n✅ Net Amount: UGX ${net.toLocaleString()}\n🏆 Tier: ${userTier}`
+            })
+        });
+
+        alert('Payment will be processed in 4-48 hours');
+        window.location.replace('profile.html');
+    } catch (err) {
+        console.error(err);
+        alert('Error: ' + err.message);
+    }
+});
+</script>
 </body>
 </html>
