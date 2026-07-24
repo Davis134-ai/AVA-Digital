@@ -306,6 +306,12 @@
                     <input type="text" id="withdrawNames" class="amount-input" placeholder="Enter names your number is registered under" minlength="5">
                 </div>
 
+                <!-- One-time setup notice: shown only if no wallet_names saved yet -->
+                <div class="names-notice" id="names-setup-notice" style="display:none;">
+                    <i class="fas fa-info-circle"></i>
+                    <strong> One-Time Setup:</strong> This is the only chance you'll get to enter your registered names here — once saved, it's locked in and will auto-fill on every future withdrawal. Please double-check spelling before confirming. Contact support if you ever need it changed.
+                </div>
+
                 <!-- Names notice -->
                 <div class="names-notice">
                     <i class="fas fa-exclamation-triangle" style="color: #FF7A00;"></i>
@@ -356,6 +362,7 @@ let userTier = 'free';
 let minAmount = 2000;
 let hasWithdrawn = false;
 let isRestricted = false; // still used for commission calc (unchanged)
+let namesAlreadySaved = false; // tracks whether wallet_names is already set
 
 async function loadBalance() {
     const { data: profile } = await supabase
@@ -384,12 +391,16 @@ async function loadBalance() {
         document.getElementById('withdrawAmount').placeholder = `Minimum UGX ${minAmount.toLocaleString()}`;
         document.getElementById('withdrawAmount').min = minAmount;
 
-        // Always lock the names field regardless
-        document.getElementById('withdrawNames').disabled = true;
-
-        // Auto-fill if wallet_names exists
         if (profile.wallet_names) {
+            // Already saved — prefill and lock, as before
             document.getElementById('withdrawNames').value = profile.wallet_names;
+            document.getElementById('withdrawNames').disabled = true;
+            namesAlreadySaved = true;
+        } else {
+            // No name saved yet — allow the user to set it once, show the notice
+            document.getElementById('withdrawNames').disabled = false;
+            document.getElementById('names-setup-notice').style.display = 'block';
+            namesAlreadySaved = false;
         }
     }
 
@@ -543,7 +554,14 @@ document.getElementById('confirmWithdraw').addEventListener('click', async () =>
     }
 
     if (!names || names.length < 5) {
-        alert('Error. No registered name is added. Please go to Profile > Payments to add a registered name to continue.');
+        alert('Please enter the names your mobile money number is registered under (minimum 5 characters).');
+        return;
+    }
+
+    // Only enforce the letters-only format the first time the name is being set.
+    // Once locked in, the field is disabled and its value is simply re-submitted as-is.
+    if (!namesAlreadySaved && !/^[a-zA-Z\s]+$/.test(names)) {
+        alert('Names can only contain letters. No numbers or special characters allowed.');
         return;
     }
 
@@ -570,6 +588,17 @@ document.getElementById('confirmWithdraw').addEventListener('click', async () =>
             .update({ balance: newBalance })
             .eq('id', user.id);
         if (updateError) throw updateError;
+
+        // Persist the registered name the first time it's set — this is the
+        // one-time save. On every subsequent withdrawal, namesAlreadySaved
+        // is true and the field stays locked/prefilled, so this is skipped.
+        if (!namesAlreadySaved) {
+            const { error: nameError } = await supabase
+                .from('profiles')
+                .update({ wallet_names: names })
+                .eq('id', user.id);
+            if (nameError) throw nameError;
+        }
 
         const { error: insertError } = await supabase
             .from('payment_requests')
