@@ -376,7 +376,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <div>
                     <div class="tier-name">Internship</div>
-                    <p style="opacity:0.8; margin: 5px 0;">4-Day Free Trial</p>
+                    <p style="opacity:0.8; margin: 5px 0;">3-Day Free Trial</p>
                 </div>
                 <div style="font-size: 1.8rem; font-weight: bold; color: #FF7A00;">FREE</div>
             </div>
@@ -389,7 +389,7 @@
             <ul style="list-style: none; margin: 20px 0;">
                 <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);"><i class="fas fa-check" style="color: #FF7A00; margin-right: 10px;"></i> UGX 200 per video</li>
                 <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);"><i class="fas fa-check" style="color: #FF7A00; margin-right: 10px;"></i> 5 videos daily limit</li>
-                <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);"><i class="fas fa-check" style="color: #FF7A00; margin-right: 10px;"></i> 4 days access only</li>
+                <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);"><i class="fas fa-check" style="color: #FF7A00; margin-right: 10px;"></i> 3 days access only</li>
                 <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);"><i class="fas fa-check" style="color: #FF7A00; margin-right: 10px;"></i> No payment required</li>
                 <li style="padding: 8px 0;"><i class="fas fa-times" style="color: #FF2D2D; margin-right: 10px;"></i> One time only per account</li>
             </ul>
@@ -624,7 +624,7 @@
 
                 if (profile.internship_active) {
                     const startDate = new Date(profile.internship_start_date);
-                    const expiryDate = new Date(startDate.getTime() + 4 * 24 * 60 * 60 * 1000);
+                    const expiryDate = new Date(startDate.getTime() + 3 * 24 * 60 * 60 * 1000);
                     const now = new Date();
                     const daysLeft = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
 
@@ -656,7 +656,7 @@
                             return;
                         }
 
-                        alert('🎉 Welcome to your 4-day internship! You can now watch 5 videos per day and earn UGX 200 per video. Good luck!');
+                        alert('🎉 Welcome to your 3-day internship! You can now watch 5 videos per day and earn UGX 200 per video. Good luck!');
                         window.location.reload();
                     });
                 }
