@@ -339,6 +339,9 @@
                 <i class="fas fa-cog"></i> Settings
             </a>
             <a href="support.html" class="btn">Support</a>
+            <button type="button" id="install-app-btn" class="action-btn" style="display: none;">
+                <i class="fas fa-download"></i> Download App
+            </button>
         </div>
 
         <!-- Wallet Section -->
@@ -707,5 +710,30 @@
 
         loadProfile();
     </script>
+
+    <script>
+        let deferredInstallPrompt;
+
+        window.addEventListener('beforeinstallprompt', (event) => {
+            event.preventDefault();
+            deferredInstallPrompt = event;
+            document.getElementById('install-app-btn').style.display = 'flex';
+        });
+
+        document.getElementById('install-app-btn').addEventListener('click', async () => {
+            if (!deferredInstallPrompt) return;
+
+            deferredInstallPrompt.prompt();
+            await deferredInstallPrompt.userChoice;
+            deferredInstallPrompt = null;
+            document.getElementById('install-app-btn').style.display = 'none';
+        });
+
+        window.addEventListener('appinstalled', () => {
+            document.getElementById('install-app-btn').style.display = 'none';
+            deferredInstallPrompt = null;
+        });
+    </script>
+
 </body>
 </html>

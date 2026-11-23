@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const supabaseUrl = 'https://cglqomnrezcpfrnuhnhs.supabase.co'
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNnbHFvbW5yZXpjcGZybnVobmhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NDg3NjgsImV4cCI6MjA4NjMyNDc2OH0.XEwj9h-FFpnzUbjtXqnh6fRehf7ZwQEVTyJw20Mh1Zg'
+const supabaseUrl = 'https://gvrqvbeeejfgmdahfwnb.supabase.co'
+const supabaseAnonKey = 'sb_publishable_mmx8f3BdL64ag7RVO9ijfQ_zl5ugIZV'
 
 // Session lasts 1 week (Supabase JWT expiry set to 604800 seconds)
 // persistSession and autoRefreshToken ensure the user stays logged in across page reloads
